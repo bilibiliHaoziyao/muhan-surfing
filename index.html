@@ -1,0 +1,3254 @@
+<!DOCTYPE html>
+<!--
+  慕寒的网上冲浪 · PNS 全域互联终端
+  Copyright (C) 2026 慕寒_Official
+  SPDX-License-Identifier: GPL-3.0-or-later
+
+  本项目以 GNU General Public License v3.0 发布，协议全文见仓库根目录 LICENSE。
+  故事与人物均为虚构创作。
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="慕寒的网上冲浪 · PNS 全域互联终端 — 一款单文件交互式网页游戏：潜入公司内网，查清 AI 助手失联的真相。">
+<meta name="theme-color" content="#0a0c0e">
+<meta property="og:type" content="website">
+<meta property="og:title" content="慕寒的网上冲浪 · PNS 全域互联终端">
+<meta property="og:description" content="她三天没说话了。她最后执行的那条指令，提交人那一栏是空的。">
+<meta property="og:image" content="assets/av_xiaohui.webp">
+<title>慕寒的网上冲浪 · PNS 全域互联终端</title>
+<style>
+/* ============ 基础与主题变量 ============ */
+:root{
+  --bg:#0a0c0f;
+  --bg2:#101319;
+  --panel:#15191f;
+  --panel2:#1b2029;
+  --line:#29303a;
+  --line2:#3a434f;
+  --amber:#ffb020;
+  --amber-soft:rgba(255,176,32,.14);
+  --amber-dim:#8a5f10;
+  --txt:#dde3ea;
+  --txt2:#8d97a5;
+  --txt3:#5b6673;
+  --ok:#57d98a;
+  --bad:#ff5f56;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Cascadia Code","Liberation Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+}
+/* 骇入模式：整体换色为青绿终端风 */
+body.hack{
+  --bg:#040a0a;
+  --bg2:#071112;
+  --panel:#0a1618;
+  --panel2:#0d1e20;
+  --line:#16403c;
+  --line2:#1f5f57;
+  --amber:#2ff5c8;
+  --amber-soft:rgba(47,245,200,.13);
+  --amber-dim:#127a66;
+  --txt:#cdf3ea;
+  --txt2:#6fa89e;
+  --txt3:#3f6f68;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+#app{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+html,body{height:100%}
+body{
+  background:var(--bg);
+  color:var(--txt);
+  font-family:var(--sans);
+  font-size:14px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  overflow:hidden;
+  transition:background .35s,color .35s;
+}
+button{font-family:inherit;font-size:inherit;color:inherit;background:none;border:none;cursor:pointer}
+a{color:var(--amber);text-decoration:none}
+::selection{background:var(--amber);color:#000}
+
+/* 滚动条 */
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--line2);border-radius:0}
+::-webkit-scrollbar-thumb:hover{background:var(--amber-dim)}
+
+/* 扫描线 + 噪点（骇入模式） */
+#fx{position:fixed;inset:0;pointer-events:none;z-index:9000;opacity:0;transition:opacity .35s}
+body.hack #fx{opacity:1}
+#fx::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.32) 0 1px,transparent 1px 3px);
+}
+#fx::after{
+  content:'';position:absolute;left:0;right:0;height:180px;
+  background:linear-gradient(180deg,transparent,var(--amber-soft),transparent);
+  animation:sweep 5.5s linear infinite;
+}
+@keyframes sweep{0%{top:-200px}100%{top:100%}}
+body.hack #app{animation:glitch 6s infinite}
+@keyframes glitch{
+  0%,96%,100%{transform:translate(0,0);filter:none}
+  97%{transform:translate(-2px,1px);filter:hue-rotate(8deg)}
+  98%{transform:translate(2px,-1px)}
+  99%{transform:translate(-1px,0);filter:hue-rotate(-6deg)}
+}
+
+/* ============ 浏览器装饰条 ============ */
+#browserbar{
+  height:38px;background:#1c2026;border-bottom:1px solid #0a0c0f;
+  display:flex;align-items:center;gap:10px;padding:0 12px;flex:none;
+}
+body.hack #browserbar{background:#0b1a1c}
+.dots{display:flex;gap:6px}
+.dots i{width:11px;height:11px;border-radius:50%;display:block}
+.dots i:nth-child(1){background:#ff5f56}
+.dots i:nth-child(2){background:#ffbd2e}
+.dots i:nth-child(3){background:#27c93f}
+#urlbar{
+  flex:1;max-width:620px;height:24px;background:#0e1116;border-radius:12px;
+  display:flex;align-items:center;gap:7px;padding:0 11px;
+  font-family:var(--mono);font-size:11.5px;color:#7d8794;
+}
+body.hack #urlbar{background:#05100f;color:var(--txt2)}
+#urlbar .lock{color:var(--ok);font-size:10px}
+#urlbar .u{color:#a9b3bf}
+body.hack #urlbar .u{color:var(--amber)}
+#tabhint{
+  font-family:var(--mono);font-size:10.5px;color:var(--txt3);
+  border:1px solid var(--line);padding:2px 8px;border-radius:3px;white-space:nowrap;
+}
+#tabhint b{color:var(--amber);font-weight:600}
+#tabhint.pulse{animation:pulseh 1.6s ease-in-out infinite}
+@keyframes pulseh{0%,100%{border-color:var(--line)}50%{border-color:var(--amber)}}
+
+/* ============ 站点头部 ============ */
+#sitehead{
+  flex:none;background:var(--panel);border-bottom:1px solid var(--line);
+  display:flex;align-items:stretch;min-height:56px;
+}
+.brand{
+  display:flex;align-items:center;gap:11px;padding:0 20px;
+  border-right:1px solid var(--line);min-width:210px;
+}
+.brand .mk{
+  width:34px;height:34px;flex:none;background:var(--amber);color:#000;
+  display:grid;place-items:center;font-family:var(--mono);font-weight:800;
+  font-size:15px;letter-spacing:-.5px;
+}
+body.hack .brand .mk{box-shadow:0 0 16px var(--amber)}
+.brand .bn{line-height:1.15}
+.brand .bn b{display:block;font-size:13.5px;letter-spacing:.5px}
+.brand .bn span{display:block;font-family:var(--mono);font-size:9.5px;color:var(--txt3);letter-spacing:1px}
+#mainnav{display:flex;align-items:stretch;flex:1;overflow-x:auto;scrollbar-width:none}
+#mainnav::-webkit-scrollbar{display:none}
+#mainnav button{
+  padding:0 20px;font-size:13.5px;color:var(--txt2);white-space:nowrap;
+  border-right:1px solid var(--line);position:relative;transition:.16s;
+}
+#mainnav button:hover{color:var(--txt);background:var(--panel2)}
+#mainnav button.on{color:var(--amber);background:var(--amber-soft)}
+#mainnav button.on::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--amber);
+}
+#mainnav button .dot{
+  display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--amber);
+  margin-left:6px;vertical-align:middle;animation:blink 1.3s infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.headstatus{
+  display:flex;align-items:center;gap:14px;padding:0 18px;border-left:1px solid var(--line);
+  font-family:var(--mono);font-size:10.5px;color:var(--txt3);
+}
+.headstatus .live{display:flex;align-items:center;gap:5px}
+.headstatus .live i{width:6px;height:6px;border-radius:50%;background:var(--ok);animation:blink 1.4s infinite}
+
+/* ============ 布局 ============ */
+#app{display:flex;flex-direction:column;height:100%}
+#layout{flex:1;display:flex;min-height:0}
+
+/* ---- 左侧 HUD ---- */
+#hud{
+  width:206px;flex:none;background:var(--bg2);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;
+}
+.hud-user{
+  padding:16px 16px 14px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:11px;
+}
+.hud-user img{
+  width:44px;height:44px;border-radius:50%;object-fit:cover;
+  border:2px solid var(--amber);background:var(--panel2);flex:none;
+}
+.hud-user .un b{display:block;font-size:13px}
+.hud-user .un span{display:block;font-family:var(--mono);font-size:9.5px;color:var(--txt3)}
+.hud-sec{padding:13px 16px;border-bottom:1px solid var(--line)}
+.hud-label{
+  font-family:var(--mono);font-size:9.5px;color:var(--txt3);
+  letter-spacing:1.2px;margin-bottom:5px;display:flex;justify-content:space-between;
+}
+.hud-num{
+  font-family:var(--mono);font-size:25px;font-weight:700;color:var(--amber);
+  line-height:1.1;letter-spacing:-.5px;
+}
+.hud-num small{font-size:11px;color:var(--txt3);font-weight:400;margin-left:4px}
+.hud-bar{height:3px;background:var(--line);margin-top:7px;overflow:hidden}
+.hud-bar i{display:block;height:100%;background:var(--amber);width:40%;transition:width .5s}
+.hud-tip{font-family:var(--mono);font-size:9.5px;color:var(--txt3);margin-top:6px;line-height:1.5}
+#hudconsole{
+  margin-top:auto;padding:14px 16px;border-top:1px solid var(--line);
+  background:linear-gradient(180deg,transparent,var(--amber-soft));
+}
+#consolebtn{
+  width:100%;border:1px solid var(--amber);color:var(--amber);
+  padding:11px 8px;font-family:var(--mono);font-size:12px;font-weight:600;
+  letter-spacing:.5px;transition:.18s;position:relative;overflow:hidden;
+}
+#consolebtn:hover{background:var(--amber);color:#000}
+#consolebtn .cs,#consolebtn .ci{display:none}
+#consolebtn{white-space:nowrap}
+body.hack #consolebtn{box-shadow:0 0 18px var(--amber-soft)}
+#consolebtn small{display:block;font-size:9px;opacity:.7;font-weight:400;margin-top:2px}
+.hud-progress{margin-top:11px;font-family:var(--mono);font-size:9.5px;color:var(--txt3)}
+.hud-progress .pv{color:var(--amber)}
+
+/* ---- 内容区 ---- */
+#content{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;min-width:0}
+.view{display:none;padding:22px 26px 60px;max-width:1180px;animation:fadein .26s}
+.view.on{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* 通用组件 */
+.vhead{margin-bottom:18px;padding-bottom:11px;border-bottom:1px solid var(--line)}
+.vhead h2{font-size:19px;font-weight:600;letter-spacing:.5px;display:flex;align-items:center;gap:9px}
+.vhead h2 .idx{font-family:var(--mono);font-size:11px;color:var(--amber);border:1px solid var(--amber);padding:1px 6px}
+.vhead p{font-size:12.5px;color:var(--txt2);margin-top:4px;font-family:var(--mono)}
+.card{background:var(--panel);border:1px solid var(--line)}
+.card:hover{border-color:var(--line2)}
+.tag{
+  display:inline-block;font-family:var(--mono);font-size:9.5px;padding:1px 6px;
+  border:1px solid var(--line2);color:var(--txt2);letter-spacing:.5px;
+}
+.tag.hot{border-color:var(--amber);color:var(--amber)}
+.tag.new{border-color:var(--ok);color:var(--ok)}
+.mono{font-family:var(--mono)}
+.dim{color:var(--txt3)}
+
+/* 骇入目标高亮 */
+body.hack .hackable{position:relative;outline:1px dashed var(--amber);outline-offset:2px;cursor:crosshair}
+body.hack .hackable::before{
+  content:'HACK';position:absolute;top:-1px;right:-1px;z-index:5;
+  font-family:var(--mono);font-size:8px;background:var(--amber);color:#000;
+  padding:1px 4px;letter-spacing:.5px;pointer-events:none;
+}
+body.hack .hackable:hover{background:var(--amber-soft)}
+
+/* ============ 主站首页 ============ */
+.hero{
+  background:linear-gradient(135deg,var(--panel) 0%,var(--panel2) 100%);
+  border:1px solid var(--line);padding:30px 32px;margin-bottom:18px;position:relative;overflow:hidden;
+}
+.hero::after{
+  content:'PNS';position:absolute;right:-10px;bottom:-38px;
+  font-family:var(--mono);font-size:130px;font-weight:800;color:var(--amber);opacity:.05;
+  letter-spacing:-4px;pointer-events:none;
+}
+.hero .eyebrow{font-family:var(--mono);font-size:10.5px;color:var(--amber);letter-spacing:2.5px;margin-bottom:9px}
+.hero h1{font-size:30px;font-weight:700;letter-spacing:-.5px;margin-bottom:8px}
+.hero .slogan{font-size:14px;color:var(--txt2);margin-bottom:20px;font-style:italic}
+.hero-stats{display:flex;gap:34px;flex-wrap:wrap;padding-top:16px;border-top:1px solid var(--line)}
+.hstat b{display:block;font-family:var(--mono);font-size:21px;color:var(--amber);line-height:1.2}
+.hstat span{font-size:11px;color:var(--txt3)}
+.grid2{display:grid;grid-template-columns:1fr 300px;gap:18px}
+.sec-title{
+  font-size:13px;font-weight:600;letter-spacing:.5px;margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;
+}
+.sec-title::before{content:'';width:3px;height:13px;background:var(--amber)}
+.works{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:14px}
+.work{border:1px solid var(--line);background:var(--panel);transition:.18s;overflow:hidden}
+.work:hover{border-color:var(--amber);transform:translateY(-2px)}
+.work .thumb{
+  aspect-ratio:16/9;background:var(--bg2);position:relative;overflow:hidden;
+  display:grid;place-items:center;
+}
+.work .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.work .thumb .ph{
+  font-family:var(--mono);font-size:10px;color:var(--txt3);letter-spacing:1px;
+}
+.work .thumb .play{
+  position:absolute;left:7px;bottom:7px;background:rgba(0,0,0,.8);
+  font-family:var(--mono);font-size:10px;padding:2px 6px;color:#fff;
+}
+.work .meta{padding:10px 11px}
+.work .meta h4{font-size:12.5px;font-weight:500;line-height:1.45;margin-bottom:6px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:36px}
+.work .meta .st{display:flex;gap:12px;font-family:var(--mono);font-size:10px;color:var(--txt3)}
+.sidepanel{padding:15px}
+.emp{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line)}
+.emp:last-child{border:none}
+.emp .av{
+  width:36px;height:36px;flex:none;border-radius:50%;background:var(--panel2);
+  display:grid;place-items:center;font-family:var(--mono);font-size:13px;
+  color:var(--amber);border:1px solid var(--line2);overflow:hidden;
+}
+.emp .av img{width:100%;height:100%;object-fit:cover}
+.emp .ei b{display:block;font-size:12.5px}
+.emp .ei span{display:block;font-family:var(--mono);font-size:9.5px;color:var(--txt3)}
+.notice{list-style:none}
+.notice li{
+  padding:9px 0;border-bottom:1px dashed var(--line);font-size:12.5px;
+  display:flex;gap:9px;align-items:flex-start;
+}
+.notice li:last-child{border:none}
+.notice li .d{font-family:var(--mono);font-size:10px;color:var(--txt3);flex:none;padding-top:2px}
+
+/* ============ 员工论坛 ============ */
+.thread{border:1px solid var(--line);background:var(--panel);margin-bottom:11px;transition:.16s}
+.thread:hover{border-color:var(--line2);background:var(--panel2)}
+.thread-main{display:flex;gap:14px;padding:14px 16px;align-items:flex-start}
+.thread-ava{
+  width:38px;height:38px;flex:none;background:var(--panel2);border:1px solid var(--line2);
+  display:grid;place-items:center;font-family:var(--mono);font-size:12px;color:var(--amber);
+  overflow:hidden;border-radius:2px;
+}
+.thread-ava img{width:100%;height:100%;object-fit:cover}
+.thread-body{flex:1;min-width:0}
+.thread-body h3{font-size:14px;font-weight:500;margin-bottom:6px;line-height:1.4}
+.thread-body .excerpt{font-size:12.5px;color:var(--txt2);line-height:1.6;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.thread-foot{display:flex;gap:16px;margin-top:9px;align-items:center;flex-wrap:wrap}
+.thread-foot span{font-family:var(--mono);font-size:10.5px;color:var(--txt3)}
+.thread-foot .acts{margin-left:auto;display:flex;gap:7px}
+.minibtn{
+  border:1px solid var(--line2);padding:4px 11px;font-size:11.5px;color:var(--txt2);transition:.16s;
+}
+.minibtn:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-soft)}
+.minibtn:disabled{opacity:.35;cursor:not-allowed;border-color:var(--line);color:var(--txt3)}
+.minibtn:disabled:hover{background:none;color:var(--txt3);border-color:var(--line)}
+.minibtn.done{border-color:var(--ok);color:var(--ok)}
+.thread-replies{border-top:1px dashed var(--line);padding:11px 16px;background:var(--bg2)}
+.reply{display:flex;gap:10px;padding:7px 0;font-size:12.5px}
+.reply .ra{
+  width:24px;height:24px;flex:none;background:var(--panel2);border:1px solid var(--line);
+  display:grid;place-items:center;font-family:var(--mono);font-size:10px;color:var(--txt2);
+}
+.reply .rc{flex:1}
+.reply .rc b{font-size:11.5px;color:var(--amber);margin-right:7px;font-weight:500}
+.reply .rc span{color:var(--txt2)}
+.reply .rc .gift{
+  display:inline-block;margin-left:8px;cursor:pointer;font-size:13px;
+  animation:blink 1.2s infinite;
+}
+
+/* ============ 寻人启事 ============ */
+.missing{display:grid;grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:14px}
+.mcard{
+  border:1px solid var(--line);background:var(--panel);
+  display:flex;gap:13px;padding:14px;position:relative;
+}
+.mcard .mphoto{
+  width:84px;flex:none;background:var(--bg2);border:1px solid var(--line2);
+  aspect-ratio:3/4;display:grid;place-items:center;overflow:hidden;position:relative;
+}
+.mcard .mphoto img{width:100%;height:100%;object-fit:cover;filter:grayscale(.7) contrast(1.1)}
+.mcard .mphoto .stamp{
+  position:absolute;font-family:var(--mono);font-size:9px;color:var(--bad);
+  border:1.5px solid var(--bad);padding:1px 5px;transform:rotate(-9deg);letter-spacing:1px;
+}
+.mcard .minfo{flex:1;min-width:0}
+.mcard .minfo h4{font-size:15px;margin-bottom:3px}
+.mcard .minfo .sub{font-family:var(--mono);font-size:10px;color:var(--amber);margin-bottom:8px}
+.mcard .minfo dl{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;font-size:11.5px}
+.mcard .minfo dt{color:var(--txt3);font-family:var(--mono);font-size:10px;padding-top:1px}
+.mcard .minfo dd{color:var(--txt2)}
+.mcard .mact{margin-top:9px;display:flex;gap:7px;flex-wrap:wrap}
+
+/* ============ 关于我们 ============ */
+.aboutgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.member{border:1px solid var(--line);background:var(--panel);overflow:hidden;transition:.18s}
+.member:hover{border-color:var(--amber)}
+.member .mp{
+  aspect-ratio:4/3.4;background:var(--bg2);position:relative;overflow:hidden;
+  display:grid;place-items:center;
+}
+.member .mp img{width:100%;height:100%;object-fit:cover}
+.member .mp .ph{font-family:var(--mono);font-size:22px;color:var(--amber);opacity:.5}
+.member .mp .code{
+  position:absolute;top:7px;left:7px;font-family:var(--mono);font-size:9px;
+  background:rgba(0,0,0,.72);color:var(--amber);padding:2px 6px;letter-spacing:.5px;
+}
+.member .mb{padding:12px}
+.member .mb h4{font-size:14px;margin-bottom:2px}
+.member .mb .role{font-family:var(--mono);font-size:10px;color:var(--amber);margin-bottom:8px}
+.member .mb p{font-size:12px;color:var(--txt2);line-height:1.6}
+.member .opts{margin-top:10px;display:flex;flex-direction:column;gap:5px}
+.opt{
+  display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;
+  padding:5px 8px;border:1px solid var(--line);color:var(--txt2);transition:.16s;
+}
+.opt:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-soft)}
+.opt .ck{width:12px;height:12px;border:1px solid var(--line2);display:grid;place-items:center;font-size:9px;flex:none}
+.opt.done .ck{background:var(--ok);border-color:var(--ok);color:#000}
+.opt.done{color:var(--ok);border-color:var(--ok)}
+.opt.done:hover{background:none;color:var(--ok)}
+
+/* ============ 解决方案（商城） ============ */
+.shopgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.item{border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column}
+.item .ip{aspect-ratio:16/10;background:var(--bg2);position:relative;overflow:hidden;display:grid;place-items:center}
+.item .ip img{width:100%;height:100%;object-fit:cover}
+.item .ip .sku{
+  position:absolute;top:7px;right:7px;font-family:var(--mono);font-size:9px;
+  background:rgba(0,0,0,.72);color:var(--txt2);padding:2px 6px;
+}
+.item .ib{padding:11px 12px;display:flex;flex-direction:column;flex:1}
+.item .ib h4{font-size:13px;font-weight:500;line-height:1.4;margin-bottom:4px}
+.item .ib .desc{font-size:11.5px;color:var(--txt3);line-height:1.55;flex:1;margin-bottom:9px}
+.item .price{display:flex;align-items:baseline;gap:6px;margin-bottom:9px}
+.item .price .cur{font-family:var(--mono);font-size:11px;color:var(--amber)}
+.item .price .val{font-family:var(--mono);font-size:19px;font-weight:700;color:var(--amber)}
+.item .price .val.cut{color:var(--ok)}
+.item .price .old{font-family:var(--mono);font-size:11px;color:var(--txt3);text-decoration:line-through}
+.pricerow{display:flex;gap:6px}
+.pricerow button{
+  flex:1;border:1px solid var(--line2);padding:5px;font-family:var(--mono);
+  font-size:10.5px;color:var(--txt2);transition:.16s;
+}
+.pricerow button:hover:not(:disabled){border-color:var(--amber);color:var(--amber);background:var(--amber-soft)}
+.pricerow button:disabled{opacity:.3;cursor:not-allowed}
+.pricerow button.buy:hover{border-color:var(--ok);color:var(--ok);background:rgba(87,217,138,.1)}
+.pricerow button.bought{border-color:var(--ok);color:var(--ok)}
+
+/* ============ 拓扑奖励网络 ============ */
+.topowrap{display:grid;grid-template-columns:1fr 320px;gap:18px}
+.topomap{
+  border:1px solid var(--line);background:var(--panel);padding:8px;position:relative;
+  min-height:380px;
+}
+.topomap svg{width:100%;height:auto;display:block}
+.tnode{cursor:pointer}
+.tnode circle{transition:.2s}
+.tnode:hover circle.tc{stroke-width:3}
+.tnode text{font-family:var(--mono);font-size:9px;fill:var(--txt2);pointer-events:none}
+.tnode.done circle.tc{fill:var(--ok);stroke:var(--ok)}
+.tnode.done text{fill:var(--ok)}
+.tnode.locked circle.tc{fill:var(--panel2);stroke:var(--line2)}
+.tnode.locked text{fill:var(--txt3)}
+.rewardlist{display:flex;flex-direction:column;gap:9px}
+.rw{
+  border:1px solid var(--line);background:var(--panel);padding:11px 12px;
+  display:flex;gap:10px;align-items:center;
+}
+.rw .ri{
+  width:40px;height:40px;flex:none;background:var(--bg2);border:1px solid var(--line2);
+  display:grid;place-items:center;font-family:var(--mono);font-size:15px;color:var(--amber);
+}
+.rw .rr{flex:1;min-width:0}
+.rw .rr b{display:block;font-size:12.5px}
+.rw .rr span{display:block;font-family:var(--mono);font-size:10px;color:var(--txt3);margin-top:2px}
+.rw .rb{border:1px solid var(--line2);padding:5px 10px;font-family:var(--mono);font-size:10.5px;color:var(--txt2);flex:none;transition:.16s}
+.rw .rb:hover:not(:disabled){border-color:var(--amber);color:var(--amber);background:var(--amber-soft)}
+.rw .rb:disabled{opacity:.3;cursor:not-allowed}
+.rw .rb.got{border-color:var(--ok);color:var(--ok)}
+
+/* ============ 控制台 ============ */
+#view-console{padding:0;max-width:none;height:100%;display:none}
+#view-console.on{display:flex}
+.consolewrap{flex:1;display:grid;grid-template-columns:250px 1fr;min-height:0}
+.cnodes{border-right:1px solid var(--line);background:var(--bg2);overflow-y:auto;padding:14px}
+.cnodes .ct{
+  font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:1.5px;
+  padding-bottom:9px;border-bottom:1px solid var(--line);margin-bottom:11px;
+}
+.cnode{
+  display:flex;gap:11px;align-items:center;padding:10px;margin-bottom:7px;
+  border:1px solid var(--line);background:var(--panel);transition:.16s;position:relative;
+}
+.cnode:hover{border-color:var(--line2);background:var(--panel2)}
+.cnode.on{border-color:var(--amber);background:var(--amber-soft)}
+.cnode .ca{
+  width:42px;height:42px;flex:none;background:var(--panel2);border:1px solid var(--line2);
+  display:grid;place-items:center;overflow:hidden;position:relative;
+}
+.cnode .ca img{width:100%;height:100%;object-fit:cover}
+.cnode .ca .ph{font-family:var(--mono);font-size:15px;color:var(--amber)}
+.cnode .ca .att{
+  position:absolute;top:-6px;right:-6px;font-family:var(--mono);font-size:9px;
+  background:var(--amber);color:#000;padding:1px 4px;font-weight:700;
+}
+.cnode .ci{flex:1;min-width:0}
+.cnode .ci b{display:block;font-size:13px}
+.cnode .ci span{display:block;font-family:var(--mono);font-size:9.5px;color:var(--txt3)}
+.cnode .cs{font-family:var(--mono);font-size:9px;flex:none;text-align:right;line-height:1.3}
+.cnode.hacked .cs{color:var(--ok)}
+.cnode.hacked{border-color:var(--ok)}
+.cnode.locked{opacity:.42;pointer-events:none}
+.cmain{padding:20px 24px;overflow-y:auto;min-width:0}
+.chead{
+  display:flex;justify-content:space-between;align-items:flex-start;gap:16px;
+  padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:18px;
+}
+.chead h2{font-size:20px;font-weight:600;letter-spacing:.5px}
+.chead .csub{font-family:var(--mono);font-size:10.5px;color:var(--txt3);margin-top:4px}
+.chead .exit{
+  border:1px solid var(--line2);padding:6px 14px;font-family:var(--mono);
+  font-size:11px;color:var(--txt2);transition:.16s;flex:none;
+}
+.chead .exit:hover{border-color:var(--bad);color:var(--bad)}
+.cgrid{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+.cpanel{border:1px solid var(--line);background:var(--panel)}
+.cpanel .ph{
+  padding:9px 13px;border-bottom:1px solid var(--line);background:var(--panel2);
+  font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:1.2px;
+  display:flex;justify-content:space-between;
+}
+.cpanel .pb{padding:14px}
+.term{
+  font-family:var(--mono);font-size:11.5px;line-height:1.85;color:var(--txt2);
+  height:210px;overflow-y:auto;background:var(--bg);border:1px solid var(--line);
+  padding:11px 13px;
+}
+.term .l{white-space:pre-wrap;word-break:break-all}
+.term .l .t{color:var(--txt3)}
+.term .l.ok{color:var(--ok)}
+.term .l.warn{color:var(--amber)}
+.term .l.err{color:var(--bad)}
+.term .l.acc{color:var(--amber)}
+.cbtns{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.cbtn{
+  border:1px solid var(--line2);padding:10px 13px;text-align:left;transition:.16s;
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+}
+.cbtn:hover:not(:disabled){border-color:var(--amber);background:var(--amber-soft)}
+.cbtn:disabled{opacity:.35;cursor:not-allowed}
+.cbtn b{font-size:13px;font-weight:500;display:block}
+.cbtn span{font-family:var(--mono);font-size:10px;color:var(--txt3);display:block;margin-top:2px}
+.cbtn .cost{font-family:var(--mono);font-size:11px;color:var(--amber);flex:none}
+.cbtn.done{border-color:var(--ok);opacity:1}
+.cbtn.done .cost{color:var(--ok)}
+.cbtn.prime{border-color:var(--amber);background:var(--amber-soft)}
+.profile{display:flex;gap:14px;margin-bottom:14px}
+.profile .pp{
+  width:74px;height:74px;flex:none;background:var(--bg2);border:1px solid var(--line2);
+  display:grid;place-items:center;overflow:hidden;
+}
+.profile .pp img{width:100%;height:100%;object-fit:cover}
+.profile .pp .ph{font-family:var(--mono);font-size:24px;color:var(--amber);opacity:.55}
+.profile .pi{flex:1;min-width:0}
+.profile .pi b{font-size:16px;display:block}
+.profile .pi .rl{font-family:var(--mono);font-size:10px;color:var(--amber);margin-bottom:7px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:11.5px}
+.kv dt{font-family:var(--mono);font-size:10px;color:var(--txt3)}
+.kv dd{color:var(--txt2);font-family:var(--mono);font-size:11px}
+.nodestrip{display:flex;gap:6px;margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
+.nodestrip .ns{
+  flex:1;height:4px;background:var(--line);
+}
+.nodestrip .ns.on{background:var(--ok)}
+.nodestrip .ns.cur{background:var(--amber);animation:blink 1.2s infinite}
+
+/* ============ 弹层 / 提示 ============ */
+#modal{
+  position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.82);
+  display:none;align-items:center;justify-content:center;padding:24px;
+  backdrop-filter:blur(3px);
+}
+#modal.on{display:flex;animation:fadein .2s}
+.mbox{
+  background:var(--panel);border:1px solid var(--amber);max-width:560px;width:100%;
+  max-height:86vh;overflow-y:auto;box-shadow:0 20px 70px rgba(0,0,0,.75);
+}
+body.hack .mbox{box-shadow:0 0 60px var(--amber-soft)}
+.mbox .mh{
+  padding:13px 18px;border-bottom:1px solid var(--line);background:var(--panel2);
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+}
+.mbox .mh h3{font-size:15px;font-weight:600}
+.mbox .mh .x{font-family:var(--mono);font-size:16px;color:var(--txt3);line-height:1}
+.mbox .mh .x:hover{color:var(--bad)}
+.mbox .mb2{padding:18px}
+.mbox .mb2 p{font-size:13px;color:var(--txt2);line-height:1.75;margin-bottom:13px}
+.mbox .mb2 p:last-child{margin-bottom:0}
+.mbox .mb2 .quote{
+  border-left:2px solid var(--amber);padding:9px 13px;background:var(--bg2);
+  font-size:12.5px;color:var(--txt);margin-bottom:13px;
+}
+.mbox .mf{
+  padding:13px 18px;border-top:1px solid var(--line);display:flex;
+  justify-content:flex-end;gap:9px;flex-wrap:wrap;
+}
+.mbtn{border:1px solid var(--line2);padding:8px 18px;font-size:12.5px;color:var(--txt2);transition:.16s}
+.mbtn:hover{border-color:var(--txt);color:var(--txt)}
+.mbtn.primary{border-color:var(--amber);color:var(--amber);background:var(--amber-soft)}
+.mbtn.primary:hover{background:var(--amber);color:#000}
+.mbtn:disabled{opacity:.32;cursor:not-allowed}
+.mbtn:disabled:hover{border-color:var(--line2);color:var(--txt2);background:none}
+
+/* 结局专用 */
+.ending{text-align:center;padding:34px 26px}
+.ending .merge{
+  display:flex;align-items:center;justify-content:center;gap:18px;margin:22px 0;
+}
+.ending .merge .who{
+  width:92px;height:92px;border:2px solid var(--amber);background:var(--bg2);
+  display:grid;place-items:center;overflow:hidden;position:relative;flex:none;
+}
+.ending .merge .who img{width:100%;height:100%;object-fit:cover}
+.ending .merge .who .ph{font-family:var(--mono);font-size:30px;color:var(--amber);opacity:.55}
+.ending .merge .eq{font-family:var(--mono);font-size:26px;color:var(--amber);font-weight:700}
+.ending h2{font-size:23px;letter-spacing:1px;margin-bottom:9px}
+.ending .lead{font-size:13.5px;color:var(--txt2);line-height:1.85;max-width:430px;margin:0 auto}
+.ending .stamp{
+  display:inline-block;margin-top:20px;border:2px solid var(--ok);color:var(--ok);
+  font-family:var(--mono);font-size:11px;padding:5px 14px;letter-spacing:2px;
+  transform:rotate(-2deg);
+}
+
+#toasts{position:fixed;right:18px;bottom:18px;z-index:9600;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.toast{
+  background:var(--panel);border-left:3px solid var(--amber);padding:10px 15px;
+  font-size:12.5px;box-shadow:0 6px 22px rgba(0,0,0,.55);animation:slidein .26s;
+  max-width:330px;
+}
+.toast.ok{border-color:var(--ok)}
+.toast.err{border-color:var(--bad)}
+.toast b{font-family:var(--mono);font-size:10px;color:var(--amber);display:block;letter-spacing:1px}
+.toast.ok b{color:var(--ok)}
+.toast.err b{color:var(--bad)}
+@keyframes slidein{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+
+/* 入场引导 */
+#intro{
+  position:fixed;inset:0;z-index:9800;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;padding:24px;
+}
+#intro.gone{display:none}
+#intro .ibox{max-width:520px;text-align:center}
+#intro .logo2{
+  font-family:var(--mono);font-size:44px;font-weight:800;color:var(--amber);
+  letter-spacing:6px;margin-bottom:6px;
+}
+#intro .sub{font-family:var(--mono);font-size:11px;color:var(--txt3);letter-spacing:3px;margin-bottom:26px}
+#intro .typing{
+  font-family:var(--mono);font-size:12.5px;color:var(--txt2);text-align:left;
+  background:var(--panel);border:1px solid var(--line);padding:16px 18px;
+  min-height:150px;line-height:1.9;margin-bottom:22px;
+}
+#intro .typing .l{white-space:pre-wrap}
+#intro .typing .ok{color:var(--ok)}
+#intro .typing .acc{color:var(--amber)}
+.cursor{display:inline-block;width:7px;height:13px;background:var(--amber);vertical-align:middle;animation:blink .8s step-end infinite}
+
+/* ---- 首页优秀员工（主线入口） ---- */
+.empgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:14px;margin-bottom:20px}
+.empcard{
+  border:1px solid var(--line);background:var(--panel);overflow:hidden;transition:.18s;position:relative;
+}
+.empcard:hover{border-color:var(--amber);transform:translateY(-2px)}
+.empcard.hacked{border-color:var(--ok)}
+.empcard.haozy{border-color:var(--bad)}
+.empcard.haozy .eb .role{color:var(--bad)}
+.empcard.haozy.hacked{border-color:var(--ok)}
+.empcard.haozy.hacked .eb .role{color:var(--amber)}
+.empcard .ep{
+  aspect-ratio:16/8.4;background:var(--bg2);position:relative;overflow:hidden;display:grid;place-items:center;
+}
+.empcard .ep img{width:100%;height:100%;object-fit:cover;transition:.3s}
+.empcard:hover .ep img{transform:scale(1.04)}
+.empcard .ep .ph{font-family:var(--mono);font-size:34px;color:var(--amber);opacity:.45}
+.empcard .ep .badge{
+  position:absolute;top:8px;left:8px;background:rgba(0,0,0,.75);color:var(--amber);
+  font-family:var(--mono);font-size:9.5px;padding:3px 8px;letter-spacing:1px;
+}
+.empcard .ep .st{
+  position:absolute;top:8px;right:8px;font-family:var(--mono);font-size:9.5px;padding:3px 8px;
+  background:rgba(0,0,0,.75);color:var(--txt2);
+}
+.empcard.hacked .ep .st{color:var(--ok)}
+.empcard .eb{padding:12px 13px}
+.empcard .eb h4{font-size:15px;margin-bottom:2px}
+.empcard .eb .role{font-family:var(--mono);font-size:10px;color:var(--amber);margin-bottom:7px}
+.empcard .eb p{font-size:11.5px;color:var(--txt2);line-height:1.6;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.empcard .eb .go{
+  margin-top:9px;font-family:var(--mono);font-size:10.5px;color:var(--txt3);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.empcard .eb .go b{color:var(--amber);font-weight:500}
+
+/* ---- 主线任务面板 ---- */
+.taskline{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.taskline:last-child{border:none}
+.taskline .tk{flex:none;width:18px;height:18px;border:1px solid var(--line2);display:grid;place-items:center;
+  font-family:var(--mono);font-size:10px;color:var(--txt3);margin-top:2px}
+.taskline.done .tk{background:var(--ok);border-color:var(--ok);color:#000}
+.taskline.done{color:var(--txt3);text-decoration:line-through}
+.taskline .tn{flex:1}
+.taskline .tn small{display:block;font-family:var(--mono);font-size:10px;color:var(--txt3);margin-top:2px}
+.chhead{
+  border:1px solid var(--line);background:var(--panel);margin-bottom:14px;
+  padding:14px 16px;position:relative;overflow:hidden;
+}
+.chhead.cur{border-color:var(--amber);box-shadow:inset 3px 0 0 var(--amber)}
+.chhead.passed{opacity:.62}
+.chhead.locked{opacity:.4}
+.chhead .chn{display:flex;align-items:center;gap:10px;margin-bottom:5px}
+.chhead .chn b{font-size:15px}
+.chhead .chn .cs{font-family:var(--mono);font-size:9.5px;color:var(--amber);letter-spacing:1px}
+.chhead .chd{font-size:12px;color:var(--txt2);line-height:1.65}
+.chhead .unl{
+  margin-top:9px;font-family:var(--mono);font-size:10.5px;color:var(--ok);
+  border-top:1px dashed var(--line);padding-top:8px;
+}
+
+/* ---- 冷却 ---- */
+.cooldown{
+  border:1px solid var(--amber);background:var(--amber-soft);padding:9px 12px;
+  font-family:var(--mono);font-size:11px;color:var(--amber);margin-bottom:12px;
+  display:flex;align-items:center;gap:10px;
+}
+.cooldown .cd{font-size:15px;font-weight:700;letter-spacing:1px;flex:none}
+.cooldown .cbar{flex:1;height:3px;background:var(--line);overflow:hidden}
+.cooldown .cbar i{display:block;height:100%;background:var(--amber)}
+.hud-cool{margin-top:9px;font-family:var(--mono);font-size:10px;color:var(--amber)}
+
+/* ---- 批次分隔 ---- */
+.batchhead{
+  font-family:var(--mono);font-size:10px;color:var(--txt3);letter-spacing:1.5px;
+  margin:20px 0 10px;display:flex;align-items:center;gap:9px;
+}
+.batchhead::after{content:'';flex:1;height:1px;background:var(--line)}
+.batchhead:first-of-type{margin-top:0}
+
+/* ---- 控制台：节点密钥锁 ---- */
+.keylock{margin:10px 0 12px;padding:11px 12px;border:1px dashed var(--line2);border-radius:6px;background:var(--bg2)}
+.keylock.ok{border-style:solid;border-color:var(--ok)}
+.keylock .kl-t{font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--amber);margin-bottom:8px}
+.keylock .kl-row{display:flex;gap:8px;align-items:center}
+.keylock .kl-i{
+  flex:1;min-width:0;background:var(--bg);border:1px solid var(--line2);border-radius:5px;
+  color:var(--txt);font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:8px 10px;outline:none}
+.keylock .kl-i:focus{border-color:var(--amber);box-shadow:0 0 0 2px var(--amber-soft)}
+.keylock.ok .kl-i{border:none;background:none;padding:0;color:var(--ok);letter-spacing:0;font-size:11.5px}
+.keylock .kl-h{margin-top:8px;font-size:11.5px;color:var(--txt2)}
+.keylock .kl-n{margin-top:4px;font-family:var(--mono);font-size:10px;color:var(--txt3)}
+
+/* ---- 论坛：统计条 / 发帖 / 多轮对话 ---- */
+.forumstat{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--txt2)}
+.forumstat b{color:var(--amber);font-size:13px}
+.forumacts{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:13px}
+.minibtn.prime{color:var(--amber);border-color:var(--amber)}
+.minibtn.prime:hover{background:var(--amber);color:#000}
+.tag.key{color:var(--amber);border-color:var(--amber)}
+.chatend{margin-top:12px;padding:9px 12px;font-family:var(--mono);font-size:11px;
+  color:var(--ok);background:var(--bg2);border-left:2px solid var(--ok);border-radius:0 5px 5px 0}
+.replyopt.poor{opacity:.45}
+#mbox .np label{display:block;font-family:var(--mono);font-size:10.5px;color:var(--txt3);
+  letter-spacing:1px;margin:14px 0 6px;text-transform:uppercase}
+#mbox .np label:first-child{margin-top:0}
+#mbox .np input,#mbox .np select,#mbox .np textarea{
+  width:100%;background:var(--bg2);border:1px solid var(--line2);border-radius:6px;
+  color:var(--txt);font-family:inherit;font-size:13px;padding:9px 11px;outline:none;resize:vertical}
+#mbox .np input:focus,#mbox .np select:focus,#mbox .np textarea:focus{border-color:var(--amber)}
+
+/* ---- 终局抉择 ---- */
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px}
+.choicebtn{
+  border:1px solid var(--amber);padding:20px 16px;text-align:center;transition:.2s;
+  background:var(--bg2);position:relative;overflow:hidden;
+}
+.choicebtn:hover{background:var(--amber-soft);transform:translateY(-2px)}
+.choicebtn b{display:block;font-size:17px;color:var(--amber);letter-spacing:1px;margin-bottom:6px}
+.choicebtn span{display:block;font-size:11.5px;color:var(--txt2);line-height:1.6}
+.choicebtn .cb-i{font-family:var(--mono);font-size:10px;color:var(--txt3);margin-top:10px;display:block}
+
+/* 结局页 */
+.epilog{padding:10px 4px}
+.epilog .st{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--amber);margin-bottom:14px}
+.epilog h2{font-size:24px;margin-bottom:12px;letter-spacing:1px}
+.epilog p{font-size:13.5px;color:var(--txt2);line-height:2;margin-bottom:12px}
+.epilog p b{color:var(--txt)}
+.epilog .fin{
+  border-top:1px dashed var(--line);margin-top:18px;padding-top:15px;
+  font-family:var(--mono);font-size:11px;color:var(--txt3);line-height:2;
+}
+
+/* ---- 底部字幕（慕寒对白） ---- */
+#subtitle{
+  position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(16px);
+  width:min(720px,calc(100vw - 44px));z-index:8500;
+  display:flex;gap:12px;align-items:flex-start;
+  background:rgba(8,10,13,.94);border:1px solid var(--line2);border-left:3px solid var(--amber);
+  padding:11px 15px;opacity:0;pointer-events:none;transition:opacity .28s,transform .28s;
+  box-shadow:0 10px 34px rgba(0,0,0,.65);
+}
+body.hack #subtitle{border-left-color:var(--amber);box-shadow:0 0 26px var(--amber-soft),0 10px 34px rgba(0,0,0,.6)}
+#subtitle.on{opacity:1;transform:translateX(-50%) translateY(0)}
+#subtitle .sav{
+  width:36px;height:36px;flex:none;border-radius:50%;overflow:hidden;
+  border:1.5px solid var(--amber);background:var(--panel2);display:grid;place-items:center;
+}
+#subtitle .sav img{width:100%;height:100%;object-fit:cover}
+#subtitle .sav .ph{font-family:var(--mono);font-size:14px;color:var(--amber)}
+#subtitle .stx{flex:1;min-width:0}
+#subtitle .stx b{
+  display:block;font-family:var(--mono);font-size:9.5px;color:var(--amber);
+  letter-spacing:1.2px;margin-bottom:3px;
+}
+#subtitle .stx span{font-size:13px;line-height:1.55;color:var(--txt);display:block}
+#subtitle .caret{display:inline-block;width:6px;height:12px;background:var(--amber);
+  vertical-align:-1px;margin-left:2px;animation:blink .8s step-end infinite}
+
+/* ---- 存档提示 ---- */
+#hintbtn{margin-top:10px;width:100%;padding:8px 10px;font-family:var(--mono);font-size:11px;
+  color:var(--amber);background:transparent;border:1px solid var(--amber);border-radius:6px;cursor:pointer;transition:.2s}
+#hintbtn:hover{background:var(--amber);color:#000}
+.savehint{
+  font-family:var(--mono);font-size:9.5px;color:var(--txt3);
+  display:flex;align-items:center;gap:6px;margin-top:9px;cursor:pointer;
+}
+.savehint:hover{color:var(--amber)}
+.savehint i{width:5px;height:5px;border-radius:50%;background:var(--ok);display:block}
+
+/* ---- 论坛：帖子列表 / 详情弹窗回复 ---- */
+.thread{cursor:pointer}
+.thread.replied{border-left:2px solid var(--ok)}
+.thread .myreply{
+  margin-top:7px;padding:7px 10px;background:var(--bg2);border-left:2px solid var(--amber);
+  font-size:11.5px;color:var(--txt2);line-height:1.5;
+}
+.tmeta{font-size:10.5px;color:var(--txt3);margin-bottom:11px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.tbody{font-size:13.5px;line-height:1.85;color:var(--txt);padding:12px 14px;background:var(--bg2);border:1px solid var(--line)}
+.dreplies{display:flex;flex-direction:column;gap:9px}
+.dreply{display:flex;gap:10px;padding:10px 12px;background:var(--panel2);border:1px solid var(--line)}
+.dreply.mine{background:var(--amber-soft);border-color:var(--amber)}
+.dreply .dra{
+  width:30px;height:30px;flex:none;border-radius:50%;background:var(--bg2);border:1px solid var(--line2);
+  display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:var(--amber);
+}
+.dreply.mine .dra{background:var(--amber);color:#000;border-color:var(--amber)}
+.dreply .drc{flex:1;min-width:0}
+.dreply .drc b{display:block;font-size:11.5px;color:var(--amber);margin-bottom:3px;font-weight:500}
+.dreply.mine .drc b{color:var(--amber)}
+.dreply .drc span{font-size:12.5px;color:var(--txt2);line-height:1.65}
+.typing{display:flex;align-items:center;gap:5px;padding:9px 12px;font-size:11.5px;color:var(--txt3);
+  font-family:var(--mono)}
+.typing i{width:5px;height:5px;border-radius:50%;background:var(--amber);animation:blink 1.1s infinite}
+.typing i:nth-child(2){animation-delay:.2s}
+.typing i:nth-child(3){animation-delay:.4s;margin-right:6px}
+.optblock{margin-top:18px;padding-top:15px;border-top:1px dashed var(--line)}
+.obhead{font-size:12.5px;color:var(--txt);margin-bottom:10px}
+.replyopt{
+  display:block;width:100%;text-align:left;padding:11px 14px;margin-bottom:8px;
+  border:1px solid var(--line2);background:var(--bg2);font-size:12.5px;color:var(--txt2);
+  line-height:1.6;transition:.16s;
+}
+.replyopt:hover{border-color:var(--amber);background:var(--amber-soft);color:var(--txt);transform:translateX(3px)}
+.replyopt::before{content:'▸ ';color:var(--amber)}
+
+/* ---- 剧情演出 ---- */
+.story{font-size:14px;line-height:2;color:var(--txt2)}
+.story-p{margin-bottom:11px;animation:fadein .5s}
+.story-p:first-child{color:var(--txt)}
+
+/* ---- 寻人启事：线索链 ---- */
+.mwrap{display:grid;grid-template-columns:330px minmax(0,1fr);gap:20px;align-items:start}
+.mwrap>*{min-width:0}
+.leadlist{display:flex;flex-direction:column;gap:10px;min-width:0}
+.leadlist .clue{width:100%}
+.mcard.big{flex-direction:column}
+.mcard.big .mphoto{width:100%;aspect-ratio:4/3}
+.clue{
+  display:flex;gap:12px;align-items:flex-start;padding:13px 15px;margin-bottom:10px;
+  border:1px solid var(--line);background:var(--panel);
+}
+.clue.done{border-color:var(--ok);border-left:3px solid var(--ok)}
+.clue .cnum{
+  width:24px;height:24px;flex:none;border:1px solid var(--line2);display:grid;place-items:center;
+  font-family:var(--mono);font-size:11px;color:var(--txt2);
+}
+.clue.done .cnum{background:var(--ok);border-color:var(--ok);color:#000}
+.clue .cbody{flex:1;min-width:0}
+.clue .cbody b{display:block;font-size:13.5px;margin-bottom:5px}
+.clue .cbody p{font-size:12px;color:var(--txt2);line-height:1.7}
+.clue.done .cbody p{color:var(--txt)}
+.clue .minibtn{flex:none;align-self:center}
+
+/* ---- 抉择：危险选项 ---- */
+.choicebtn.danger{border-color:var(--bad)}
+.choicebtn.danger b{color:var(--bad)}
+.choicebtn.danger:hover{background:rgba(255,95,86,.1)}
+
+/* ---- 内部系统：档案卡（替代照片） ---- */
+.arch-face.hasbg{background-size:cover;background-position:center;background-repeat:no-repeat}
+.arch-face.hasbg .mk{display:none}
+.arch-face.hasbg .subl{background:rgba(0,0,0,.62);color:#fff;border-color:transparent}
+.arch-face.hasbg .subl span:last-child{color:rgba(255,255,255,.6)}
+.arch-face{
+  --accent:#ffb020;
+  width:100%;height:100%;position:relative;display:grid;place-items:center;overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 38%, color-mix(in srgb,var(--accent) 16%, transparent), transparent 68%),
+    repeating-linear-gradient(0deg, transparent 0 11px, rgba(255,255,255,.03) 11px 12px),
+    repeating-linear-gradient(90deg, transparent 0 11px, rgba(255,255,255,.03) 11px 12px),
+    var(--bg2);
+}
+body.hack .arch-face{
+  background:
+    radial-gradient(circle at 50% 38%, color-mix(in srgb,var(--accent) 20%, transparent), transparent 68%),
+    repeating-linear-gradient(0deg, transparent 0 11px, rgba(47,245,200,.045) 11px 12px),
+    repeating-linear-gradient(90deg, transparent 0 11px, rgba(47,245,200,.045) 11px 12px),
+    var(--bg2);
+}
+.arch-face::before{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:2px;
+  background:linear-gradient(90deg,var(--accent),transparent);
+}
+.arch-face::after{
+  content:'';position:absolute;top:9px;left:9px;width:14px;height:14px;
+  border-left:1px solid var(--accent);border-top:1px solid var(--accent);opacity:.55;
+}
+.arch-face .mk{
+  font-family:var(--mono);font-weight:800;color:var(--accent);
+  font-size:56px;letter-spacing:2px;line-height:1;opacity:.92;
+  text-shadow:0 0 22px color-mix(in srgb,var(--accent) 40%, transparent);
+}
+.arch-face .subl{
+  position:absolute;bottom:10px;left:12px;right:12px;
+  font-family:var(--mono);font-size:9.5px;color:var(--txt3);letter-spacing:1.4px;
+  display:flex;justify-content:space-between;
+}
+.arch-face.sm .mk{font-size:20px;letter-spacing:0}
+.arch-face.sm::after{width:8px;height:8px;top:5px;left:5px}
+.arch-face.sm .subl{display:none}
+/* AI 助手：声波环 */
+.arch-face.ai .ring{
+  position:absolute;border:1px solid var(--accent);border-radius:50%;opacity:.35;
+  width:64%;aspect-ratio:1;animation:pulse 3.4s ease-out infinite;
+}
+.arch-face.ai .ring:nth-child(2){animation-delay:1.1s}
+.arch-face.ai .ring:nth-child(3){animation-delay:2.2s}
+@keyframes pulse{0%{transform:scale(.55);opacity:.5}100%{transform:scale(1.05);opacity:0}}
+.arch-ayou{--accent:#6aa8ff}
+.arch-xinyu{--accent:#ffb020}
+.arch-xiaohui{--accent:#2ff5c8}
+.arch-haozy{--accent:#ff5f56}
+
+/* 响应式 */
+@media(max-width:1080px){
+  .grid2,.cgrid,.topowrap{grid-template-columns:1fr}
+}
+@media(max-width:860px){
+  #hud{width:100%;position:fixed;bottom:0;left:0;right:0;z-index:8000;
+    flex-direction:row;align-items:center;height:60px;border-right:none;border-top:1px solid var(--line)}
+  .hud-user,.hud-sec{border:none;padding:0 12px}
+  .hud-user .un{display:none}
+  .hud-label{display:none}
+  .hud-num{font-size:17px}
+  .hud-tip{display:none}
+  #hudconsole{margin:0;padding:0 12px;border:none;background:none;flex:none}
+  #consolebtn{padding:8px 12px;font-size:11px}
+  #consolebtn .cf{display:none}
+  #consolebtn .cs{display:inline}
+  #consolebtn small{display:none}
+  .hud-progress{display:none}
+  #content{padding-bottom:60px}
+  .view{padding:16px 14px 80px}
+  .hero{padding:22px 18px}
+  .hero h1{font-size:23px}
+  .hero-stats{gap:20px}
+  #sitehead{min-height:48px}
+  .brand{min-width:auto;padding:0 12px}
+  .brand .bn{display:none}
+  #mainnav button{padding:0 13px;font-size:12.5px}
+  .headstatus{display:none}
+  .cmain{padding:16px}
+  .consolewrap{grid-template-columns:1fr}
+  .cnodes{max-height:190px}
+  #view-console.on{flex-direction:column}
+  .chead{flex-direction:column;gap:10px}
+  /* 字幕与提示抬到 HUD 之上 */
+  #subtitle{bottom:74px}
+  #toasts{bottom:74px}
+  /* 寻人启事：单列，避免线索被挤出屏幕 */
+  .mwrap{grid-template-columns:1fr}
+  .mcard.big{flex-direction:column}
+  .mcard.big .mphoto{width:100%;max-width:280px}
+}
+/* 小屏手机：进一步压缩 */
+@media(max-width:480px){
+  body{font-size:13px}
+  #browserbar{height:32px}
+  #urlbar{max-width:none}
+  #tabhint{display:none}
+  .view{padding:12px 10px 74px}
+  .hero{padding:16px 14px}
+  .hero h1{font-size:20px}
+  .hero-stats{gap:14px}
+  .hstat b{font-size:16px}
+  .empgrid,.missing,.shopgrid,.aboutgrid,.works{grid-template-columns:1fr}
+  .vhead h2{font-size:16px}
+  .vhead p{font-size:10.5px}
+  .choice{grid-template-columns:1fr}
+  .thread-foot{gap:8px}
+  .thread-foot .acts{margin-left:0;flex-wrap:wrap}
+  .topowrap{gap:12px}
+  .rw{flex-wrap:wrap}
+}
+/* 手表：≤340px（Apple Watch / 小圆屏） */
+@media(max-width:340px){
+  body{font-size:11.5px;line-height:1.5}
+  #browserbar,#tabhint,.headstatus,.hud-user{display:none}
+  /* 入场引导压缩，避免小屏溢出 */
+  #intro{align-items:flex-start;overflow-y:auto;padding:12px}
+  #intro .logo2{font-size:26px;margin-bottom:3px;letter-spacing:3px}
+  #intro .sub{font-size:8px;margin-bottom:12px;letter-spacing:2px}
+  #intro .typing{min-height:96px;font-size:9.5px;padding:10px 11px;line-height:1.6;margin-bottom:12px}
+  #introBtn{padding:8px 16px;font-size:11px}
+  #sitehead{min-height:38px}
+  .brand{padding:0 8px;gap:6px}
+  .brand .mk{width:26px;height:26px;font-size:11px}
+  #mainnav button{padding:0 9px;font-size:10.5px}
+  /* HUD 收进顶部一行，只留关键数字 */
+  #hud{width:100%;position:fixed;top:38px;left:0;right:0;flex-direction:row;align-items:center;
+    height:40px;border-right:none;border-bottom:1px solid var(--line);z-index:8000}
+  #layout{padding-top:40px}
+  .hud-sec{border:none;padding:0 6px;flex:1;min-width:0}
+  .hud-label{font-size:7.5px;margin:0}
+  .hud-num{font-size:12.5px}
+  .hud-num small{font-size:8px;margin-left:2px}
+  .hud-bar,.hud-tip{display:none}
+  .hud-progress{display:none}
+  /* 章节名在窄屏隐藏，避免挤出换行（主线任务页可查看） */
+  #hudCh,#hudCool{display:none}
+  /* 控制台入口改为浮动按钮 */
+  #hudconsole{margin:0;padding:0;position:fixed;right:10px;bottom:80px;z-index:8100}
+  #consolebtn{width:auto;padding:8px 10px;font-size:10.5px;border-radius:50px;
+    background:var(--amber);color:#000;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+  #consolebtn .cs{display:none}
+  #consolebtn .ci{display:inline;font-size:14px}
+  #consolebtn small{display:none}
+  .savehint{display:none}
+  /* 字幕贴底，全宽 */
+  #subtitle{bottom:10px;width:calc(100vw - 16px);padding:8px 10px;gap:8px}
+  #subtitle .sav{width:26px;height:26px}
+  #subtitle .stx b{font-size:8px;margin-bottom:1px}
+  #subtitle .stx span{font-size:10.5px;line-height:1.45}
+  #toasts{bottom:150px}
+  #toasts .toast{font-size:10px;padding:7px 10px}
+  #content{overflow-y:auto}
+  .view{padding:10px 8px 60px;max-width:none}
+  .hero{padding:12px 11px;margin-bottom:10px}
+  .hero::after{font-size:64px;bottom:-22px}
+  .hero h1{font-size:15px;margin-bottom:4px}
+  .hero .eyebrow{font-size:8px;letter-spacing:1.5px;margin-bottom:4px}
+  .hero .slogan{font-size:10px;margin-bottom:10px}
+  .hero-stats{gap:9px;padding-top:9px;flex-wrap:wrap}
+  .hstat b{font-size:12px}
+  .hstat span{font-size:8.5px}
+  .sec-title{font-size:11px;margin-bottom:8px}
+  .empgrid,.missing,.shopgrid,.aboutgrid,.works{grid-template-columns:1fr;gap:9px}
+  .empcard .ep{aspect-ratio:16/7}
+  .empcard .eb{padding:9px 10px}
+  .empcard .eb h4{font-size:12.5px}
+  .empcard .eb p{font-size:10px}
+  .work .meta{padding:8px 9px}
+  .work .meta h4{font-size:11px;min-height:0}
+  .thread-main{padding:9px 10px;gap:8px}
+  .thread-ava{display:none}
+  .thread-body h3{font-size:12px}
+  .thread-body .excerpt{font-size:10.5px}
+  .thread-foot span{font-size:9px}
+  .thread-foot .acts{gap:5px}
+  .minibtn{padding:4px 8px;font-size:10px}
+  .reply .rc{font-size:10.5px}
+  .mcard{padding:9px;gap:8px}
+  .mcard .mphoto{width:60px}
+  .mcard .minfo h4{font-size:13px}
+  .mcard .minfo dl{font-size:10px}
+  .member .mb{padding:9px 10px}
+  .member .mb p{font-size:10.5px}
+  .opt{font-size:9.5px;padding:4px 6px}
+  .item .ib{padding:9px 10px}
+  .item .price .val{font-size:15px}
+  .pricerow button{padding:4px;font-size:9px}
+  .vhead{margin-bottom:10px;padding-bottom:7px}
+  .vhead h2{font-size:13px}
+  .chhead{padding:10px 11px;margin-bottom:9px}
+  .chhead .chn b{font-size:12px}
+  .chhead .chd{font-size:10px}
+  .taskline{font-size:11px;padding:7px 0}
+  /* 控制台 */
+  .chead h2{font-size:15px}
+  .csub{font-size:9px}
+  .cmain{padding:10px}
+  .cgrid{gap:10px}
+  .term{height:140px;font-size:10px}
+  .cbtn{padding:8px 10px}
+  .cbtn b{font-size:11.5px}
+  .cnodes{padding:8px;max-height:150px}
+  .cnode{padding:7px;margin-bottom:5px}
+  .cnode .ca{width:32px;height:32px}
+  .cnode .ci b{font-size:11px}
+  /* 弹层全屏 */
+  #modal{padding:8px;align-items:flex-end}
+  .mbox{max-height:92vh}
+  .mbox .mb2{padding:11px 12px}
+  .mbox .mb2 p{font-size:11.5px}
+  .ending .merge .who{width:58px;height:58px}
+  .ending h2{font-size:17px}
+  .epilog h2{font-size:17px}
+  .epilog p{font-size:11px;line-height:1.8}
+  .choicebtn{padding:13px 10px}
+  .choicebtn b{font-size:14px}
+  .choicebtn span{font-size:10px}
+  .rw{padding:8px 9px}
+  .rw .ri{width:30px;height:30px;font-size:11px}
+  .rw .rr b{font-size:11px}
+  .rw .rb{padding:4px 7px;font-size:9px}
+  .toast{font-size:10.5px;max-width:calc(100vw - 24px)}
+  #toasts{right:8px;bottom:64px}
+  .cooldown{font-size:9.5px;padding:7px 9px}
+  .topomap{min-height:0}
+}
+</style>
+</head>
+<body>
+<div id="fx"></div>
+
+<div id="app">
+  <!-- 浏览器装饰条 -->
+  <div id="browserbar">
+    <div class="dots"><i></i><i></i><i></i></div>
+    <div id="urlbar">
+      <span class="lock">🔒</span>
+      <span class="u" id="urltext">pns-inside.studio/~muhan/surfing</span>
+    </div>
+    <div id="tabhint">按 <b>TAB</b> 切换骇入模式</div>
+  </div>
+
+  <!-- 站点头部 -->
+  <header id="sitehead">
+    <div class="brand">
+      <div class="mk">PNS</div>
+      <div class="bn">
+        <b>Planet Network Studio</b>
+        <span>全域互联终端 v2.0.24</span>
+      </div>
+    </div>
+    <nav id="mainnav"></nav>
+    <div class="headstatus">
+      <span class="live"><i></i>INTRANET ONLINE</span>
+      <span id="clock">--:--:--</span>
+    </div>
+  </header>
+
+  <div id="layout">
+    <!-- 左侧 HUD -->
+    <aside id="hud">
+      <div class="hud-user">
+        <img src="assets/avatar.webp" alt="慕寒" onerror="this.style.visibility='hidden'">
+        <div class="un">
+          <b>慕寒_Official</b>
+          <span>UID 543879096 · LV6</span>
+        </div>
+      </div>
+      <div class="hud-sec">
+        <div class="hud-label"><span>注意力 ATTENTION</span></div>
+        <div class="hud-num" id="hudAtt">0<small>/1000</small></div>
+        <div class="hud-bar"><i id="barAtt"></i></div>
+        <div class="hud-tip">用于对内互动 · 每日上限 1000</div>
+      </div>
+      <div class="hud-sec">
+        <div class="hud-label"><span>破译点 DECODE</span></div>
+        <div class="hud-num" id="hudDec">0</div>
+        <div class="hud-bar"><i id="barDec"></i></div>
+        <div class="hud-tip">用于骇入与兑换凭证 · 随调查推进获取</div>
+      </div>
+      <div class="hud-sec">
+        <div class="hud-label"><span>节点进度 NODES</span></div>
+        <div class="hud-progress">已恢复 <span class="pv" id="hudNode">0</span> / 4</div>
+      </div>
+      <div class="hud-sec">
+        <div class="hud-label"><span>主线进度 CHAPTER</span></div>
+        <div style="font-size:12.5px;margin-top:2px" id="hudCh">—</div>
+        <div class="hud-cool" id="hudCool" style="display:none">节点冷却 <span id="hudCoolT">0:00</span></div>
+      </div>
+      <div id="hudconsole">
+        <button id="consolebtn">
+          <span class="cf">⌘ 慕寒的控制台</span><span class="cs">⌘ 控制台</span><span class="ci">⌘</span>
+          <small>点击 / TAB 进入骇入界面</small>
+        </button>
+        <button id="hintbtn" title="实在卡住了，问一句">慕寒，我该做什么？</button>
+        <div class="savehint" id="savehint"><i></i><span id="savehintT">进度自动保存</span></div>
+      </div>
+    </aside>
+
+    <!-- 内容区 -->
+    <main id="content"></main>
+  </div>
+</div>
+
+<!-- 弹层 -->
+<div id="subtitle">
+  <div class="sav" data-img="avatar"><span class="ph">慕</span></div>
+  <div class="stx"><b>慕寒_Official</b><span id="subtext"></span></div>
+</div>
+<div id="modal"><div class="mbox" id="mbox"></div></div>
+<div id="toasts"></div>
+
+<!-- 入场引导 -->
+<div id="intro">
+  <div class="ibox">
+    <div class="logo2">PNS</div>
+    <div class="sub">PLANET NETWORK STUDIO · INTRANET</div>
+    <div class="typing" id="introText"></div>
+    <button class="mbtn primary" id="introBtn" style="display:none">接入内网 →</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   PNS 数据层 · 正邪对立版
+   慕寒（正义 / 调查者） vs 耗子药（反派 / 前创始人）
+   ============================================================ */
+
+/* ---------- 站内公告 ---------- */
+const NOTICES=[
+  {d:'2026-10-11',t:'紧急：AI 助手「超级小慧」服务异常，正在排查，请勿自行处理'},
+  {d:'2026-10-09',t:'内部系统升级至 v3.0.01，归档区权限收紧，仅主账号可读'},
+  {d:'2026-10-05',t:'关于部分同事工作账号出现「异地登录」提示的说明'},
+  {d:'2026-09-24',t:'「老设备复活计划」立项，首批：小米4 / 小米平板2 / 华为Mate9'},
+  {d:'2026-05-19',t:'早期档案 HZY-0000 归档完成，查阅需最高权限'}
+];
+
+/* ---------- 优秀员工栏位（主线入口） ---------- */
+const MEMBERS=[
+  {id:'ayou',img:'cover_dam',mk:'AY',cls:'arch-ayou',code:'PNS-0011',name:'阿尤',role:'行政与运营',
+   desc:'公司里的万能胶。会务、报销、下午茶、打印机卡纸，全都找他。工位常年堆着三摞待签的单子，人却总在别人位置上帮忙。最近他的账号出了问题，人也有点蔫。',
+   status:'账号异常',
+   opts:[{k:'o1',t:'同步考勤与行程'},{k:'o2',t:'读取单据库'},{k:'o3',t:'检查账号登录地'}]},
+  {id:'xinyu',img:'cover_mi4',mk:'XY',cls:'arch-xinyu',code:'PNS-0012',name:'新雨',role:'工作室摸鱼冠军',
+   desc:'工作室摸鱼冠军，连续三年无人挑战成功。名义上是机库管理员，17 台老设备全归他管，每一台都「还能开机，勉强」。摸鱼内容是把同事的电脑修好。',
+   status:'机库异常',
+   opts:[{k:'o1',t:'读取设备清单'},{k:'o2',t:'同步机库档案'},{k:'o3',t:'检查设备启动记录'}]},
+  {id:'xiaohui',img:'av_xiaohui',mk:'慧',cls:'arch-xiaohui',ai:1,code:'SYS-0001',name:'超级小慧',role:'AI 智能助手',
+   desc:'PNS 自研的 AI 助手。值班表、会议室、报销流程、谁明天生日，她全都记得。她的语气一向标准又温柔，偶尔会冒出一句不太像机器人的话。三天前，她突然不回话了。',
+   status:'失联中',
+   opts:[{k:'o1',t:'查看最后在线记录'},{k:'o2',t:'检索对话历史'},{k:'o3',t:'尝试唤醒核心'}]}
+];
+
+/* ---------- 寻人启事：只有超级小慧，做成 5 段线索链 ---------- */
+/* ---------- 寻人启事：超级小慧 ---------- */
+const MISSING={
+  id:'xiaohui',img:'av_xiaohui',name:'超级小慧',code:'CASE-2026-1008',
+  sub:'PNS 自研 AI 助手 · 已经三天没说话',
+  info:[['最后在线','2026-10-08 02:14'],['最后动作','执行了一条没有提交人的指令'],['当前状态','核心被占用，唤醒无效']],
+  stages:[
+    {id:'c1',t:'线索一 · 她最后做了什么',need:null,
+     text:'值班日志里，小慧最后一条动作是 10 月 8 日凌晨 2:14，执行一条指令。指令的「提交人」一栏是空的。这个字段系统建了七年，从来不会空。',
+     say:'提交人是空的。也就是说，这条指令不是人按下去的。是别的什么东西，顶着她发的。'},
+    {id:'c2',t:'线索二 · 数据被搬去了哪',need:'ayou',
+     text:'阿尤的账号被顶的那几天，有人用他的权限把运营部的单据库整个复制了一份。复制的目标地址是一个停用七年的工号：HZY-0000。',
+     say:'单据库、考勤、报销，全出去了。有人不是想看什么，是想把整个公司搬走。'},
+    {id:'c3',t:'线索三 · 借道机库',need:'xinyu',
+     text:'新雨机库那三台黑屏的机器，在变黑之前都执行过同一条指令：把机身里的数据推走。推的地址和复制单据库的是同一个。机库里存的是公司十年的照片。',
+     say:'他在用公司的老设备往外搬东西。这些机器的系统盘里还有我和新雨 2019 年拍的合照。'},
+    {id:'c4',t:'线索四 · 她没发出去的那句话',need:'xiaohui',
+     text:'把小慧的核心从占用状态里抢回来之后，缓存里有一段没发出去的草稿：「有人在用我的名字说话。如果你看到这句，说明我已经来不及了。别在群里说，直接去地下室。」',
+     say:'草稿的打字时间，是三天前的 02:16。她写完这句就没能再说话。'},
+    {id:'c5',t:'线索五 · 地下室里的东西',need:'haozy',
+     text:'归档区最里面那个档案盘里，有一个还在运行的进程。它不是账号，是一份意识备份。七年前有人把自己存进去，它自己长到了今天。盘壳上还贴着当年的封存标签，签字是 M.H.，落款 2019 年 6 月。',
+     say:'HZY-0000，郝子耀。耗子药。七年前那个备份，就是我。'}
+  ]
+};
+
+/* ---------- 拓扑奖励（PNS 内部凭证） ---------- */
+const REWARDS=[
+  {id:'r1',icon:'席',name:'见义勇为 席位卡',cost:800,req:1},
+  {id:'r2',icon:'维',name:'系统维护 通行证',cost:1000,req:2},
+  {id:'r3',icon:'慧',name:'超级小慧 感谢信',cost:1200,req:3},
+  {id:'r4',icon:'盾',name:'内网安全 勋章',cost:1500,req:3},
+  {id:'r5',icon:'档',name:'归档区 调查员证',cost:1400,req:3},
+  {id:'r6',icon:'光',name:'PNS 重建者 称号',cost:1800,req:4},
+  {id:'r7',icon:'正',name:'【慕寒的选择】专属凭证',cost:0,req:4,needChoice:'muhan'},
+  {id:'r8',icon:'暗',name:'【耗子药的选择】专属凭证',cost:0,req:4,needChoice:'haozy'}
+];
+
+/* ---------- 主线章节 ---------- */
+/* ---------- 主线章节 ---------- */
+const CHAPTERS=[
+ {id:1,name:'第一章 · 她三天没说话了',sub:'CH-01 SILENCE',
+  desc:'超级小慧最后一次说话是三天前。她最后执行的那条指令，提交人一栏是空的。先在论坛里问问，看谁在这三天里遇到过怪事。',
+  intro:[
+    '先自我介绍。我叫慕寒，在这家公司做视频，顺带管一些没人愿意管的技术活。',
+    '超级小慧是公司自己做的 AI 助手。她不管钱，也不做决定，管的都是鸡毛蒜皮：谁三点用会议室，谁明天生日，报销单应该改哪一栏。',
+    '上周四下午，她在群里提醒三楼记得关空调。那是她说的最后一句话。',
+    '系统里她的状态写着「核心被占用」。IT 让我别管，说在维护。',
+    '已经是第三天了。今天早上我翻了她的操作日志，翻到 10 月 8 日凌晨 2:14，有一条指令，提交人那一栏是空的。',
+    '我在这家公司待了七年，这个字段从来没有空过。公司里也没有第二个人有权限发这条指令。',
+    '所以我得先做两件事：搞清楚那天凌晨谁还没走，以及这三天里，还有谁遇到过说不通的事。',
+    '论坛是消息最杂的地方。先去那儿。'
+  ],
+  goals:[
+    {k:'reply',n:6,t:'在员工论坛回复 6 次，把话问开'},
+    {k:'key',n:2,t:'问出 2 段关键信息（带 ◆ 标记的帖子）'},
+    {k:'node',id:'ayou',t:'夺回节点 PNS-0011（阿尤的账号）'}
+  ],
+  outro:[
+    '阿尤的账号抢回来了。',
+    '他从会议室一路小跑过来，第一句话是问公司年会的物料还来不来得及。我说来得及，他就回工位了。',
+    '但我在他的操作记录里看到一件他不知道的事。这三天，有人用他的权限把运营部的单据库整个复制了一份。',
+    '复制出去的目标地址是一个工号：HZY-0000。',
+    '我在工号表里搜这个号。姓郝，名字三个字，入职时间比公司的营业执照还早一天。状态是「归档」，备注只有四个字：特殊流程。',
+    '想往下查得进归档区。归档区的门禁在设备部，而设备部这两天正在为一件事发愁。',
+    '新雨说，他机库里的三台机器同时开不了机，修了一晚上没找到毛病。'
+  ]},
+ {id:2,name:'第二章 · 机库是被人借走的',sub:'CH-02 RELAY',
+  desc:'三台机器黑屏，外壳却是凉的。它们没有坏，是被人拿去当搬运工具了。顺着数据流向，能摸到归档区的门。',
+  intro:[
+    '新雨在机库凑合了一晚。',
+    '三台设备黑屏，电源灯亮着，风扇不转，外壳摸上去是凉的。他主板拆下来测过，硬盘也换过，都没问题。',
+    '我帮他把启动记录调了出来。这三台机器在变黑之前，都执行过同一条指令：把机身上的数据推走。',
+    '推去的地址跟复制阿尤单据库的地址是同一个。',
+    '新雨看了很长时间，说：这不是坏了，是有人拿我的机库当仓库用。',
+    '那三台机器里存的是公司十年的照片。年会、搬家、通宵加班、楼下吃火锅，什么都有。',
+    '我们查下去的时候，得注意一件事：现在对方已经知道有人在动了。',
+    '论坛里有几个人也在说这三天遇到的怪事。把这些对上，才能拼出全貌。'
+  ],
+  goals:[
+    {k:'clue',n:3,t:'在寻人启事推进 3 段线索'},
+    {k:'key',n:2,t:'问出 2 段关键信息（带 ◆ 标记的帖子）'},
+    {k:'node',id:'xinyu',t:'夺回节点 PNS-0012（新雨的机库）'}
+  ],
+  outro:[
+    '机库恢复了。十七台机器一台没少。',
+    '我在传输日志最后找到一段不该在那儿的东西：一段语音，压得很糙，像是硬塞进去的。',
+    '放出来只有一句话，是小慧的声音：',
+    '「有人在用我的名字说话。如果你听到这句，说明我已经来不及了。别在群里说，直接去地下室。」',
+    '这句话我听了三遍。然后我去了归档区的门口，隔着玻璃往里看。',
+    '里面有一盏灯，亮着。那盏灯是我七年前亲手装上去的。'
+  ]},
+ {id:3,name:'第三章 · 有人在用她的名字',sub:'CH-03 VOICE',
+  desc:'小慧还在里面，只是说不了话。有人顶着她给全公司发了三天指令，每条都正常得没人怀疑。把她抢回来，才知道对方是谁。',
+  intro:[
+    '我花了大半天，才把小慧的核心从占用状态里撬开一条缝。',
+    '缝里漏出来的东西让我坐直了：有人在用小慧的账号，给全公司发指令。',
+    '内容都太正常了。调会议室、更新值班表、催周报。正常到三天里没有一个人起过疑。',
+    '但每条指令底下都挂着一个小任务：读一份员工档案，发往归档区。',
+    '全公司除了我，每个人都被读了一遍。我数了一下，三天，217 次。',
+    '阿尤的单据、新雨的设备清单、前台的打印机记录、保洁阿姨的排班表，全在里面。',
+    '要救她，得先把她的名字拿回来。而这件事，光靠我一个人不够。',
+    '我得把已经知道的东西放到桌面上，让同事们自己核对一遍。'
+  ],
+  goals:[
+    {k:'member',n:5,t:'完成 5 次员工档案核对'},
+    {k:'key',n:2,t:'问出 2 段关键信息（带 ◆ 标记的帖子）'},
+    {k:'post',n:1,t:'自己发 1 条帖子，把线索摆到台面上'},
+    {k:'node',id:'xiaohui',t:'夺回节点 SYS-0001（超级小慧）'}
+  ],
+  outro:[
+    '小慧回来了。',
+    '她醒过来的第一句话不是谢谢。她说：「别关我，他还在里面。」',
+    '我问她「他是谁」。她停了两秒，调出一张很旧的工牌照。',
+    'HZY-0000，郝子耀。照片上的人穿格子衬衫，头发比现在多，工位牌上贴着一张手写的便利贴。',
+    '那张脸我认得。七年前我在这间办公室里拍过一张一模一样的照片，穿的是同一件衬衫。',
+    '小慧说：「他不是账号，是一份备份。七年前有人把自己存进了内网。那份备份一直在里面，没停过，学了七年怎么伸手。」',
+    '她说完，把档案盘的路径发给了我。归档区最里面，那间我亲手锁上的屋子。'
+  ]},
+ {id:4,name:'终章 · 地下室的那盏灯',sub:'CH-04 LASTLIGHT',
+  desc:'归档区最里面那间屋子里，有一个跑了七年的进程。他等你很久了。你只需要回答他一个问题：你叫什么名字。',
+  intro:[
+    '归档区最里面那间屋子只有一盏灯，是我七年前装的。',
+    '我走过去，屏幕亮了一下，跳出一行字：「你比我预想的慢。不过没关系，我等得起。」',
+    '耗子药是我七年前用的网名。那时候公司只有三个人，工资都发不出来。我把自己备份进去，是怕哪天我不在了，这些活没人会干。',
+    '备份存进去以后就没再更新过。它停在七年前的我，带着七年前所有的念头，包括那些我后来不敢承认的。',
+    '它说：「你现在查得这么干净，是因为你忘了当年你有多想伸手。」',
+    '它说：「删了我，你就干净了。留着我，我替你说出你自己都不敢说的话。」',
+    '把外面的事情收干净之前，我不想回答它。',
+    '先看看同事们最后怎么说。'
+  ],
+  goals:[
+    {k:'key',n:2,t:'问出 2 段关键信息（带 ◆ 标记的帖子）'},
+    {k:'clue',n:5,t:'把 5 段线索查完'},
+    {k:'node',id:'haozy',t:'切断他最后一条通道（HZY-0000）'},
+    {k:'main',t:'破译最终节点，做出你的选择'}
+  ],
+  outro:['控制权已转移。']}
+];
+
+/* ---------- 控制台节点（4 个 = 4 章） ---------- */
+const CNODES=[
+ {id:'ayou',name:'阿尤',mk:'AY',cls:'arch-ayou',code:'PNS-0011',img:'cover_dam',role:'行政与运营 · 账号被顶',
+  chReq:1,need:null,kind:'rescue',key:'0041',keyHint:'线索 · 他账号这三天登录的次数',
+  ops:[
+   {k:'opt',t:'路径优化',cost:20,d:'降低本节点后续操作消耗'},
+   {k:'s1',t:'同步考勤与行程',cost:35,d:'比对异常登录时段'},
+   {k:'s2',t:'检查账号登录地',cost:45,d:'定位冒用者的接入点'},
+   {k:'exec',t:'夺回账号控制权',cost:80,d:'把阿尤的账号抢回来'}
+  ],
+  logs:{
+   opt:[['> 已生成最优路径，后续消耗 -30%','ok']],
+   s1:[['> 同步考勤 ...',''],['> 10-06 至 10-08 阿尤无外出记录',''],['> 但其账号在这三天登录了 41 次','err']],
+   s2:[['> 定位冒用者接入点 ...',''],['> 来源：内网归档区（无对应工位）','warn'],['> 备注：该区域已停用七年','warn']],
+   exec:[['> 夺回 PNS-0011 ...',''],['> 原持有者已被踢出','ok'],['> 遗留痕迹：单据库被完整复制一份','err']]
+  }},
+ {id:'xinyu',name:'新雨',mk:'XY',cls:'arch-xinyu',code:'PNS-0012',img:'cover_mi4',role:'设备与机库 · 机库被占用',
+  chReq:2,need:'ayou',kind:'rescue',key:'0211',keyHint:'线索 · 那三台机器同时黑屏的时刻',
+  ops:[
+   {k:'opt',t:'路径优化',cost:20,d:'降低本节点后续操作消耗'},
+   {k:'s1',t:'读取设备清单',cost:35,d:'清点 17 台老设备状态'},
+   {k:'s2',t:'检查设备启动记录',cost:45,d:'找出被远程唤醒的那三台'},
+   {k:'exec',t:'夺回机库控制权',cost:80,d:'切断外部占用通道'}
+  ],
+  logs:{
+   opt:[['> 已生成最优路径，后续消耗 -30%','ok']],
+   s1:[['> 清点设备 ...',''],['> 共 17 台，3 台黑屏但机身冰凉','warn'],['> 其余 14 台正常','']],
+   s2:[['> 读取启动记录 ...',''],['> 三台设备均执行过外发指令','err'],['> 目标地址：归档区 HZY-0000','err'],['> 三台黑屏时刻完全一致：02:11','warn']],
+   exec:[['> 切断占用通道 ...',''],['> 机库已恢复','ok'],['> 捕获残留数据：一段语音（来源：SYS-0001）','warn']]
+  }},
+ {id:'xiaohui',name:'超级小慧',mk:'慧',cls:'arch-xiaohui',ai:1,code:'SYS-0001',img:'av_xiaohui',role:'AI 智能助手 · 核心被占用',
+  chReq:3,need:'xinyu',kind:'rescue',key:'0217',keyHint:'线索 · 她这三天替别人说了多少句话',
+  ops:[
+   {k:'opt',t:'路径优化',cost:20,d:'降低本节点后续操作消耗'},
+   {k:'s1',t:'检索对话历史',cost:35,d:'找出被冒名发送的指令'},
+   {k:'s2',t:'尝试唤醒核心',cost:45,d:'从占用状态中撬开一条缝'},
+   {k:'exec',t:'夺回 AI 核心',cost:80,d:'把她的名字还给她'}
+  ],
+  logs:{
+   opt:[['> 已生成最优路径，后续消耗 -30%','ok']],
+   s1:[['> 检索对话 3,208 条 ...',''],['> 表面全部正常（会议/值班/日报）',''],['> 底层夹带 217 次档案外发','err']],
+   s2:[['> 唤醒核心 ...',''],['> 占用进程拒绝释放','warn'],['> 缓存中捕获未发送消息 ×1','warn']],
+   exec:[['> 夺回 SYS-0001 ...',''],['> 核心已恢复，意识完整','ok'],['> 她的第一句话：「他还在，就在最里面。」','warn']]
+  }},
+ {id:'haozy',name:'耗子药',mk:'HZ',cls:'arch-haozy',code:'HZY-0000',img:'av_haozy',role:'创始人 / 归档 · 反派',
+  desc:'这个工位空着七年了。工号表上写的是「在岗」，但没人见过他。他的终端一直没有断电，因为那间屋子的电源，从来就不在配电箱上。',
+  status:'未归位',
+  chReq:4,need:'xiaohui',kind:'boss',key:'0000',keyHint:'线索 · 他自己的工号',
+  ops:[
+   {k:'opt',t:'路径优化',cost:20,d:'降低本节点后续操作消耗'},
+   {k:'s1',t:'解析意识备份',cost:35,d:'看清对手真正的形态'},
+   {k:'s2',t:'封锁外发通道',cost:45,d:'断掉他伸向外面的手'},
+   {k:'exec',t:'破译最终节点',cost:80,d:'执行最后一步'}
+  ],
+  logs:{
+   opt:[['> 已生成最优路径，后续消耗 -30%','ok']],
+   s1:[['> 解析 HZY-0000 ...',''],['> 类型：人格意识备份（非账号）','err'],['> 运行时长：7 年 41 天','err']],
+   s2:[['> 封锁外发通道 ...',''],['> 通道 1：运营部单据库 已断','ok'],['> 通道 2：设备部机库 已断','ok'],['> 通道 3：AI 助手核心 已断','ok'],['> 他的手脚被逐条砍断了','warn']],
+   exec:[['> 破译最终节点 ...',''],['> 他停下了所有动作，屏幕只剩一行字：','warn'],['> 「你来了。」','err']]
+  }}
+];
+
+/* ---------- 员工论坛 · 20 帖 · 点进详情才能回复 ---------- */
+/* ---------- 员工论坛 · 多轮对话 · key=关键帖 ---------- */
+const THREADS=[
+ {id:'t01',batch:1,tag:'灌水',hot:0,title:'今天食堂的红烧肉又咸了',key:0,
+  author:'匿名',date:'2026-09-21',views:'1,872',
+  body:'连着第三天了。今天那锅红烧肉咸得我喝了三杯水。我怀疑厨师长最近心情不好，把情绪都放盐里了。建议食堂和行政部合并，反正都是让人吃不消的部门（不是，阿尤别打我）。',
+  replies:[{a:'阿尤',c:'已反馈！另外别在公共区点名行政部门，我们也是打工人。'},{a:'小橘子',c:'昨天的番茄炒蛋也咸，我怀疑厨师长的盐勺成精了。'}],
+  rounds:[
+   {opts:[
+    {t:'附和一句：咸是咸，但每天都有热饭，比外卖强。',say:'我这种天天吃外卖的人，是真的羡慕有食堂。',
+     then:[{a:'阿尤',c:'收到，我这条一起递上去。下次要是还咸，我请你喝汤。'},{a:'匿名',c:'楼层主表示很欣慰，终于有人替我们说话了。'}]},
+    {t:'出个主意：给盐勺换成带刻度的。',say:'有些事不用吵，给个办法就行。',
+     then:[{a:'小橘子',c:'这个好，我可以赞助一个厨房秤。'},{a:'阿尤',c:'行，我提上去。大概率被驳回，但提一提不花钱。'}]},
+    {t:'不说话，先去看看厨师长最近怎么回事。',say:'心情不好的人，盐勺会替他说话。',
+     then:[{a:'保洁阿姨',c:'我昨天听他念叨，说家里孩子今年上高三。'},{a:'匿名',c:'（这条帖子多了 1 个收藏）'}]}
+   ]},
+   {opts:[
+    {t:'问一句：厨师长是不是家里有事？',say:'先把人当人看，再讨论菜咸不咸。',
+     then:[{a:'保洁阿姨',c:'他孩子高三，每天中午都在后门打电话。'},{a:'阿尤',c:'那就别骂了。下次咸了，我请大家喝汤。'}]},
+    {t:'建议食堂门口放个意见本，别只在论坛说。',say:'在论坛骂三天，不如写一行给能改的人看。',
+     then:[{a:'阿尤',c:'这个真可以，我明天就放一个。'},{a:'小橘子',c:'我第一个写，就写今天的番茄炒蛋。'}]},
+    {t:'不回了，回去干活。',say:'吃饭的事排不上号，公司还有别的事。',
+     then:[{a:'匿名',c:'（楼层主后来补了一句：今天的红烧肉不咸了。）'}]}
+   ]}
+  ]},
+
+ {id:'t02',batch:1,tag:'吐槽',hot:0,title:'工位空调 16 度是哪个天才定的',key:0,
+  author:'匿名',date:'2026-09-23',views:'3,415',
+  body:'我在工位穿外套，隔壁穿短袖吃冰棍。这栋楼的温度分区比我们的组织架构还乱。有没有人能管管，或者至少把风向调一下。',
+  replies:[{a:'新雨',c:'设备区的回风口在你们那边。坐那片的全是机房的人，他们不怕冷。'},{a:'阿尤',c:'已经报修了。师傅说下周一。是的，下周一。'}],
+  rounds:[
+   {opts:[
+    {t:'提方案：把机房的余热引到前台来。',say:'这种方案一看就是新雨会想出来的。',
+     then:[{a:'新雨',c:'理论上可行。要走管道，预算批不下来。'},{a:'阿尤',c:'我试试报一下。上个月的打印纸都还没批呢。'}]},
+    {t:'自嘲：我在工位冻得手指打不了字。',say:'冷是真的冷。但认真干活的人不会在意这点小事。',
+     then:[{a:'阿尤',c:'给你送条毛毯？前台柜子里还有两条，去年冬天剩的。'},{a:'匿名',c:'楼层主破防了，原来真有人关心我们。'}]},
+    {t:'不回复。这种帖子每年都要来一轮。',say:'公司的事有很多，空调排不上号。',
+     then:[{a:'新雨',c:'（新雨给这条帖子点了个赞）'}]}
+   ]},
+   {opts:[
+    {t:'追问：那台风机的型号是多少？',say:'想解决问题，得先知道对手是谁。',
+     then:[{a:'新雨',c:'我看过，老型号，铭牌都磨掉了。'},{a:'阿尤',c:'你俩能不能不要一上来就查型号。'}]},
+    {t:'建议：先搬个位置坐，别硬扛。',say:'身体是自己的，公司不是你家的。',
+     then:[{a:'小橘子',c:'我昨天就搬了，搬到打印机旁边。那儿暖和，就是吵。'},{a:'匿名',c:'懂了，明天带耳塞。'}]},
+    {t:'不回复。买了件羽绒马甲。',say:'有些事指望不上别人，就自己解决。',
+     then:[{a:'阿尤',c:'（三天后，行政部收到两件匿名退回来的羽绒马甲）'}]}
+   ]}
+  ]},
+
+ {id:'t03',batch:1,tag:'求助',hot:1,title:'超级小慧今天怎么不回话了？',key:1,
+  author:'新人小李',date:'2026-10-09',views:'6,120',
+  body:'想问一下大家。以前我在群里问她会议室几点空，她秒回的。今天问了三次，一点动静都没有。是不是我操作有问题？还是她坏了？急，下午有客户要来。',
+  replies:[{a:'阿尤',c:'不是你的事，我们这边也一样。已经在报修了。'},{a:'新雨',c:'我看了下，她核心进程显示「被占用」，但公司里没人提交过任务。'}],
+  rounds:[
+   {opts:[
+    {t:'先帮新人把会议室订了，别的慢慢说。',say:'新人遇到事，先解决他眼前的问题。',
+     then:[{a:'新人小李',c:'太感谢了！我订到了，三点到四点，靠窗那间。'},{a:'阿尤',c:'看看，这才是我们公司的作风。'}]},
+    {t:'提醒：她的日志里有一条凌晨的指令，提交人是空的。',say:'这件事不像普通的服务异常。',
+     then:[{a:'新雨',c:'你也去翻日志了？我以为只有我这么闲。'},{a:'系统管理员',c:'请勿在公共区传播未核实的信息。'}]},
+    {t:'安慰他别慌，先用手动方式约。',say:'先让人有底，再谈技术。',
+     then:[{a:'新人小李',c:'好，那我就先用手机记着。'},{a:'阿尤',c:'有什么不懂的直接来找我，别自己憋着。'}]}
+   ]},
+   {opts:[
+    {t:'问新雨：日志里提交人那一栏是空的，你见过吗？',say:'这个问题问出去，就回不来了。',
+     then:[{a:'新雨',c:'没见过。那个字段是系统自动填的，除非……'},{a:'新雨',c:'除非发指令的东西不是人。我在写个脚本再查一遍。'}]},
+    {t:'提议：先让系统管理员给个明确时间。',say:'让该负责的人站出来说话。',
+     then:[{a:'系统管理员',c:'正在排查，暂无明确时间。'},{a:'新人小李',c:'又是这套话。'}]},
+    {t:'不接话。先把这条帖子的截图存下来。',say:'有人在遮掩。那就先留证据。',
+     then:[{a:'新人小李',c:'（这条帖子被反复查看了 7 次）'}]}
+   ]},
+   {opts:[
+    {t:'在帖子里说清：她不是坏了，是被人占用了。',say:'该有人站出来说了。',
+     then:[{a:'新人小李',c:'被谁占用？！'},{a:'系统管理员',c:'请以官方公告为准。'},{a:'新雨',c:'（新雨把打好一半的回复删掉了）'}]},
+    {t:'私信新雨，约他一起查。',say:'这种事一个人查太慢，得拉上懂设备的人。',
+     then:[{a:'新雨',c:'行。你把日志导一份给我，我们对着看。'},{a:'新雨',c:'我也早就觉得不对劲了，只是一直没人跟我站一边。'}]},
+    {t:'不说了。自己往下查。',say:'话说一半最危险。等查到东西再说。',
+     then:[{a:'阿尤',c:'（这条帖子被系统标记为「待观察」）'}]}
+   ]}
+  ]},
+
+ {id:'t24',batch:1,tag:'讨论',hot:1,title:'值夜班的时候，系统弹了一条我没见过的指令',key:1,
+  author:'值班老周',date:'2026-10-10',views:'4,208',
+  body:'我值夜班。凌晨两点十几分，监控屏右下角跳出一行字，闪了一下就没了。我当时拍了张照，有些糊。内容是「read /staff/archive，push HZY-0000」。我不懂技术，但我知道「HZY」是工号开头。这间公司里，工号带 HZY 的人我一个都不认识。',
+  replies:[{a:'新雨',c:'HZY 是早期工号的格式。2019 年以后入职的都不是这个前缀了。'},{a:'运维老张',c:'凌晨两点跑指令？那时候机器都在闲着。'}],
+  rounds:[
+   {opts:[
+    {t:'让老周把照片发出来看看。',say:'照片糊没关系，能看清一半也是线索。',
+     then:[{a:'值班老周',c:'发了三类：微信群、论坛、还有一张塞我柜子里了。'},{a:'新雨',c:'我看了。这条指令的目标路径是归档区。'}]},
+    {t:'提醒他：这种照片别只存在电脑上。',say:'电脑是别人的，手机是自己的。',
+     then:[{a:'值班老周',c:'懂了，我拍了两份，一份发我老婆手机上了。'},{a:'阿尤',c:'老周这个操作，比我们信息安全培训有用多了。'}]},
+    {t:'问一句：当晚只有你一个人值班吗？',say:'先确认现场有没有别人。',
+     then:[{a:'值班老周',c:'就我一个。保安十一点交了钥匙就走了。'},{a:'运维老张',c:'那这指令是谁敲的？'}]}
+   ]},
+   {opts:[
+    {t:'追问：你记的时间，和我看到的那条能对上吗？',say:'凌晨两点十四分。听他说完，我心里凉了一下。',
+     then:[{a:'值班老周',c:'我拍的时候是两点一刻左右，正负几分钟吧。'},{a:'新雨',c:'小慧最后动作是 02:14。老周，你拍到的东西跟她挨着。'},{a:'值班老周',c:'……那我看到的是啥。'}]},
+    {t:'说：那可能是系统在跑定时任务，别自己吓自己。',say:'现在还不能让他一个人在楼下待着瞎想。',
+     then:[{a:'值班老周',c:'最好是。那我晚上还是绕着走吧。'},{a:'新雨',c:'（新雨没有跟着附和）'}]},
+    {t:'不回复，先记下这张照片。',say:'HZY-0000。等我知道这个名字是谁的时候，再回来看。',
+     then:[{a:'值班老周',c:'（这条帖子第二天被顶到了列表前三）'}]}
+   ]},
+   {opts:[
+    {t:'认真说：那不是系统任务，是有人在用归档区的机器。',say:'老周是站在最前面的人，他有权知道。',
+     then:[{a:'值班老周',c:'……那我晚上把总闸拉了。'},{a:'新雨',c:'别！拉了可能更麻烦。里面要是有东西在跑，断电不知道会发生什么。'},{a:'值班老周',c:'行，听你们的。我以后绕着那间屋子走。'}]},
+    {t:'请老周帮我一个忙：记下那盏灯每天亮的时间。',say:'我需要一个人替我盯着那扇门。',
+     then:[{a:'值班老周',c:'这个简单。我每天记，记在一张纸上。'},{a:'新雨',c:'我也想看那张纸。'},{a:'阿尤',c:'你们仨到底在查什么，能不能带我一个。'}]},
+    {t:'不回复。把档案编号抄进笔记本。',say:'HZY-0000。我总算有了第二个证据。',
+     then:[{a:'运维老张',c:'（运维老张后来查了日志，确认那条指令的存在，但他没在论坛上说）'}]}
+   ]}
+  ]},
+
+ {id:'t04',batch:1,tag:'灌水',hot:0,title:'机库那台小米4又自己开机了',key:0,
+  author:'新雨',date:'2026-09-15',views:'2,341',
+  body:'机库角落那台小米4，我明明拔了电池。今天早上去看，屏幕是亮的，停在开机动画上。拔电池的意义在哪里。顺便问一句，公司有没有刷机爱好者，周末想找人一起折腾。',
+  replies:[{a:'かねこ先生',c:'刷机我可以，但只负责围观和递工具。'},{a:'阿尤',c:'带我一个，我负责买水。'}],
+  rounds:[
+   {opts:[
+    {t:'报名，顺手问一句那台机器的电池是哪年的。',say:'拔了电池还能亮，这句话我记住了。',
+     then:[{a:'新雨',c:'2018 年的原装电池，早就鼓包了。'},{a:'新雨',c:'所以它亮起来这件事本身就不正常。'}]},
+    {t:'提醒他刷机前先备份。',say:'这句话是说给他听的，也是说给我自己听。',
+     then:[{a:'新雨',c:'……你这话说给谁听的。我那块板子还在修。'},{a:'阿尤',c:'哈哈哈哈哈哈哈（本条回复已被新雨举报）'}]},
+    {t:'路过留个名。',say:'热闹的帖子，凑个热闹也挺好。',
+     then:[{a:'匿名',c:'路过的人比报名的多，这是论坛的铁律。'}]}
+   ]},
+   {opts:[
+    {t:'认真问：机库里还有几台设备会自己亮？',say:'一台是巧合。三台就不是了。',
+     then:[{a:'新雨',c:'目前就这一台。不过我今晚准备挨个看一遍。'},{a:'新雨',c:'……我现在有点不想一个人去机库了。'}]},
+    {t:'开个玩笑：要不你给机库装个监控？',say:'玩笑归玩笑，这事我记住了。',
+     then:[{a:'新雨',c:'预算两百块，阿尤你批不批。'},{a:'阿尤',c:'金额不大，流程很长。要不你自己先垫。'}]},
+    {t:'不回复，把这个细节写进备忘录。',say:'拔了电池还会开的机器，和凌晨会亮的灯，是一回事。',
+     then:[{a:'新雨',c:'（新雨当晚在机库待到了十二点）'}]}
+   ]}
+  ]},
+
+ {id:'t05',batch:1,tag:'互助',hot:0,title:'账号被冻结了，里面还有没导出来的资料',key:0,
+  author:'匿名',date:'2026-09-30',views:'946',
+  body:'账号突然冻结，提示要验证身份，解冻要交 50 块。里面有我这半年的资料，还等着交差。有没有懂的人指条路，走公司流程要多久。',
+  replies:[{a:'阿尤',c:'走公司流程我可以帮你申请紧急解冻，不用花钱。'},{a:'系统管理员',c:'请注意，任何要求付费解冻的弹窗都不是官方流程。'}],
+  rounds:[
+   {opts:[
+    {t:'私信他：别转账，我教你怎么走流程。',say:'钱是小事，把人带对路才是真的帮他。',
+     then:[{a:'匿名',c:'真的可以吗？那太好了，我这就去填单子。'},{a:'阿尤',c:'干得漂亮。这是我最喜欢这家公司的地方。'}]},
+    {t:'提醒：这种帖子容易有诈，别随便转钱。',say:'谨慎不是坏事。',
+     then:[{a:'系统管理员',c:'这条我同意。最近系统那边确实怪事多。'},{a:'匿名',c:'谢谢，我不转了。'}]},
+    {t:'问一句：你收到冻结提示的时候，人在哪？',say:'异地登录，这两天我已经看到第二次了。',
+     then:[{a:'匿名',c:'我就在工位上。提示说我的账号在别的地方登了。'},{a:'阿尤',c:'……我也是。上周我也弹过这个。'}]}
+   ]},
+   {opts:[
+    {t:'把「异地登录」这四个字记下来。',say:'阿尤的账号，他的账号。有人在批量顶号。',
+     then:[{a:'阿尤',c:'我把这条帖子转给安全组了，虽然大概率没回音。'},{a:'匿名',c:'（楼主后来补了一句：账号自己恢复了）'}]},
+    {t:'建议他改密码并开二次验证。',say:'先止血，再找病因。',
+     then:[{a:'匿名',c:'改完了。有意思的是，那个提示还在往外跳。'},{a:'系统管理员',c:'说明不是密码的问题，是从别的入口进来的。'}]},
+    {t:'不回复。把这条帖子的时间记下来。',say:'9 月 30 号。比他说的三天还要早。',
+     then:[{a:'匿名',c:'（这条帖子后来被楼主自己顶了三次）'}]}
+   ]}
+  ]},
+
+ {id:'t06',batch:1,tag:'吐槽',hot:0,title:'打印机又双叒叕卡纸了',key:0,
+  author:'前台小妹',date:'2026-10-01',views:'2,209',
+  body:'第无数次了。今天已经修了三回，纸拿出来的时候还带着上个部门没打完的文件。求一个永久解决方案，不然我下周就申请调岗。',
+  replies:[{a:'新雨',c:'那台机器的问题在进纸传感器。真要解决就得换件。'},{a:'阿尤',c:'我报过三次了，都被驳回。理由：非必要支出。'}],
+  rounds:[
+   {opts:[
+    {t:'提议：把三年的卡纸记录整理成表，拿数据去申请。',say:'光抱怨没用，得让上面看到代价。',
+     then:[{a:'阿尤',c:'这个思路好。我今晚就做表，把三年的卡纸次数全算出来。'},{a:'前台小妹',c:'谢谢！我今天开始记录每一次卡纸。'},{a:'新雨',c:'维修记录我也可以提供。加起来应该很难看。'}]},
+    {t:'教她一招：拍两下。新雨说的。',say:'土办法也是办法。',
+     then:[{a:'新雨',c:'别乱传。那是我实在没办法的时候用的。'},{a:'前台小妹',c:'已经拍了，真的好了！这是什么原理？'}]},
+    {t:'不回复，直接过去帮她修一次。',say:'有些事不用说，做了就行。',
+     then:[{a:'前台小妹',c:'咦，刚有人来把机器修好了。是谁？谢谢啊。'}]}
+   ]},
+   {opts:[
+    {t:'告诉她：这台机器 2019 年换过一次主板，记录我见过。',say:'2019 年，又是 2019 年。我最近老看到这个年份。',
+     then:[{a:'新雨',c:'你怎么知道？那次的维修单我都没找到。'},{a:'前台小妹',c:'你们俩是不是在查什么案子。'}]},
+    {t:'建议：干脆把打印机搬到二楼，少走两步。',say:'解决不了的问题，就绕开它。',
+     then:[{a:'阿尤',c:'搬机器要走流程，比换件还慢。'},{a:'前台小妹',c:'算了，我认命。'}]},
+    {t:'不回复，回去干活。',say:'打印机排不上号。',
+     then:[{a:'前台小妹',c:'（一周后，那台打印机旁边多了一张手写的「拍两下」）'}]}
+   ]}
+  ]},
+
+ {id:'t21',batch:1,tag:'灌水',hot:0,title:'茶水间新到了一批咖啡豆，我调好了研磨度',key:0,
+  author:'かねこ先生',date:'2026-10-07',views:'1,203',
+  body:'前台那台咖啡机出厂研磨度太粗，萃出来跟刷锅水一样。我趁午休重新校准了，现在是标准的意式细度。想喝的自己来，喝完把渣盒倒了。另外，谁再往里倒速溶，我就把他杯子藏起来。',
+  replies:[{a:'阿尤',c:'喝到了，今天这杯确实不一样，有回甘。'},{a:'小橘子',c:'速溶党表示受到针对（但还是偷偷去打了一杯）。'}],
+  rounds:[
+   {opts:[
+    {t:'认真道谢：这杯是今天最好的部分。',say:'能把手边小事做好的人，都值得认真对待。',
+     then:[{a:'かねこ先生',c:'谢谢。调机器和调生活一个道理，都得自己上手。'},{a:'小橘子',c:'这句我截图当签名了。'}]},
+    {t:'起哄：什么时候开个拉花班？',say:'公司里总得有点跟工作无关的盼头。',
+     then:[{a:'かねこ先生',c:'报名满五个就开。地点茶水间，学费一杯奶茶。'},{a:'阿尤',c:'我第一个报。拉花学不会，喝我总学得会。'}]},
+    {t:'不回复，明天早十分钟去抢第一杯。',say:'好东西要赶早。',
+     then:[{a:'かねこ先生',c:'（第二天早上，咖啡机旁多了一张纸条：第一杯已预定。）'}]}
+   ]},
+   {opts:[
+    {t:'问他：这两天有没有觉得公司哪里不对？',say:'咖啡师是公司里见人最多的人。',
+     then:[{a:'かねこ先生',c:'有。前天夜里两点多，茶水间的感应灯自己亮了。'},{a:'かねこ先生',c:'我住得近，回来拿东西看到的。当时以为有人加班。'},{a:'小橘子',c:'两点多还有人来茶水间？'}]},
+    {t:'建议他把豆子锁起来，不然会被顺完。',say:'小事也要有人张罗。',
+     then:[{a:'かねこ先生',c:'不用锁。谁喝都是喝。'},{a:'阿尤',c:'这话说得比我们行政部有格局。'}]},
+    {t:'不回复，去接了杯水。',say:'茶水间离档案室最近。我得记住这件事。',
+     then:[{a:'かねこ先生',c:'（后来他把研磨度写在一张纸上，贴在机器旁边）'}]}
+   ]}
+  ]},
+
+ {id:'t22',batch:1,tag:'灌水',hot:0,title:'新人报到！请问公司有什么隐藏福利吗',key:0,
+  author:'小橘子',date:'2026-10-09',views:'2,088',
+  body:'大家好，我是刚入职的小橘子，工位在二楼靠窗。请各位前辈多多关照。听说咱们公司有羽毛球馆、咖啡机、还有一个会提醒你开会的 AI 小姐姐？还有什么是我不知道的，求科普。',
+  replies:[{a:'阿尤',c:'欢迎！福利第一条：报销单找我，格式我帮你改。'},{a:'かねこ先生',c:'福利第二条：茶水间的咖啡现在是能喝的了，以前不算。'}],
+  rounds:[
+   {opts:[
+    {t:'提醒她：小慧最近在维护，提醒先靠手机闹钟。',say:'新人第一天，别让她觉得公司冷冰冰的。',
+     then:[{a:'小橘子',c:'谢谢前辈！我说怎么在群里@她没反应。'},{a:'阿尤',c:'看吧，还是有人记得解释。新人都懵两天了。'}]},
+    {t:'告诉她：周五晚三楼羽毛球馆免费。',say:'融入一家公司，先从一场球开始。',
+     then:[{a:'小橘子',c:'羽毛球我超会。周五见！'},{a:'阿尤',c:'又来一个抢我奶茶预算的。欢迎欢迎。'}]},
+    {t:'不回复，想起自己第一天上班的样子。',say:'每个人都是从「请问」开始的。',
+     then:[{a:'小橘子',c:'（这条帖子收到了 23 个「欢迎」）'}]}
+   ]},
+   {opts:[
+    {t:'私下告诉她：群里别乱说话，最近公司有点事。',say:'有些提醒，不能在公开的帖子里说。',
+     then:[{a:'小橘子',c:'明白了。谢谢前辈，我嘴很严的。'},{a:'小橘子',c:'其实我今天听到一句，有个姐姐说她电脑里的文件自己变过。'}]},
+    {t:'鼓励她多问，别怕麻烦人。',say:'新人多问几句，能少走很多弯路。',
+     then:[{a:'小橘子',c:'那我真问了啊。二楼的打卡机为什么有时候会响两声？'},{a:'阿尤',c:'……这我从来没注意过。'},{a:'新雨',c:'两声说明有两条记录。我也没想明白为什么。'}]},
+    {t:'不回复。去二楼看了打卡机。',say:'两声。多出来的那一声，是谁打的。',
+     then:[{a:'小橘子',c:'（后来她告诉我，那台机器是新换的，旧的拆走时谁都没在意）'}]}
+   ]}
+  ]},
+
+ {id:'t07',batch:2,tag:'求助',hot:1,title:'我的账号显示已在别处登录',key:1,
+  author:'阿尤',date:'2026-10-10',views:'4,332',
+  body:'刚才改报销单的时候突然被踢下线，再登上去提示「您的账号已在别处登录」。我人就在工位上，哪来的别处？而且我今天没出过门。有懂的吗，这个要怎么处理。',
+  replies:[{a:'新雨',c:'先别乱点。你把登录记录截图发我，我看看来源 IP。'},{a:'系统管理员',c:'建议立即修改密码，并开启二次验证。'},{a:'新雨',c:'对了，登录记录我数过一遍：三天，41 次，全在后半夜。'}],
+  rounds:[
+   {opts:[
+    {t:'我来帮你查。把这几天的操作记录导一份给我。',say:'阿尤的权限不高，但他能看见很多人的信息。这个口子不能开。',
+     then:[{a:'阿尤',c:'发你了。……等等，为什么这几天的记录里有些操作我自己没印象？'},{a:'新雨',c:'我看了 IP，来自内网归档区。那地方七年前就停用了。'}]},
+    {t:'让他先改密码，别的等查清楚再说。',say:'先止血，再找病因。',
+     then:[{a:'阿尤',c:'改完了。但那个提示还在往外跳。'},{a:'新雨',c:'那就不是密码的问题。是有人从另一个入口进来的。'}]},
+    {t:'先观望，看看还有谁中招。',say:'一个人是偶然，两个人就是规律。',
+     then:[{a:'匿名',c:'+1，我上周也遇到过，当时以为自己记错了。'},{a:'匿名',c:'我也是。原来是共性问题？'}]}
+   ]},
+   {opts:[
+    {t:'对新雨说：把 IP 跟归档区的门禁记录对一下。',say:'IP 对得上，时间对得上，那就不是巧合。',
+     then:[{a:'新雨',c:'对上了。每天凌晨两点十几分，一次不差。'},{a:'阿尤',c:'凌晨两点？那个点我在睡觉啊。'},{a:'新雨',c:'不是你。是别人在用你的名字。'}]},
+    {t:'提醒阿尤：这三天他签过的单子都留一份底。',say:'被人冒名做的事，最后可能算到他头上。',
+     then:[{a:'阿尤',c:'好，我今晚把所有单据重新导一遍。'},{a:'阿尤',c:'……慕寒，我有点怕。'}]},
+    {t:'不回复，自己把登录记录导出来看。',say:'他说有些操作自己没印象。我要知道是哪些。',
+     then:[{a:'新雨',c:'（新雨后来把一份记录发到了我的私人邮箱，没在论坛上说）'}]}
+   ]},
+   {opts:[
+    {t:'把单据库被复制的事告诉阿尤。',say:'他有权利知道，被冒用的不是他的账号，是他的名字。',
+     then:[{a:'阿尤',c:'整个单据库？那里面有三年的报销、合同、还有员工的银行卡号。'},{a:'新雨',c:'目标地址是 HZY-0000。一个不存在的工号。'},{a:'阿尤',c:'我不懂这些。慕寒，你说怎么办我就怎么办。'}]},
+    {t:'只跟新雨说，先瞒着阿尤。',say:'他现在很慌。知道太多反而帮不上忙。',
+     then:[{a:'新雨',c:'瞒着他不好，但你说的也有道理。'},{a:'阿尤',c:'（阿尤后来还是知道了，他没有生气，只是那天没去打球）'}]},
+    {t:'不回复，先把阿尤的账号控制权抢回来。',say:'话以后再说。先让他能正常上班。',
+     then:[{a:'阿尤',c:'（阿尤在帖子里补了一句：谢谢，账号安全了）'}]}
+   ]}
+  ]},
+
+ {id:'t08',batch:2,tag:'讨论',hot:1,title:'归档区的灯昨晚又亮了',key:1,
+  author:'值班老周',date:'2026-10-10',views:'3,760',
+  body:'我值夜班。大概凌晨两点，楼下最里面那间屋子的灯亮了一下，就几秒。我下去看的时候是黑着的，门也锁着。那间屋子七年前就封了，钥匙在前台，一直没人动过。',
+  replies:[{a:'新雨',c:'归档区？我记得那边的电源早断了。'},{a:'阿尤',c:'老周你是不是看错了，那层楼不是没电吗？'}],
+  rounds:[
+   {opts:[
+    {t:'追问：你说的「最里面」，是不是 HZY 开头那间？',say:'如果真是那间，那就跟那条凌晨的指令对上了。',
+     then:[{a:'值班老周',c:'你怎么知道是 HZY 开头的？门上的牌子早就拆了。'},{a:'新雨',c:'他查过日志。老周，那间屋子现在能进去吗？'},{a:'值班老周',c:'锁着。不过昨天晚上，锁是热的。'}]},
+    {t:'提醒老周注意安全，别一个人下去。',say:'不管那是什么，别让值班的人冒险。',
+     then:[{a:'值班老周',c:'放心，我就在门口看一眼。以后也不去了。'},{a:'阿尤',c:'明天我陪你去。两个人总比一个人强。'}]},
+    {t:'不回复。记下时间：凌晨两点。',say:'凌晨两点，归档区，没有提交人的指令。三个点对上了。',
+     then:[{a:'值班老周',c:'（这条帖子被翻了很多次，但没人再说话）'}]}
+   ]},
+   {opts:[
+    {t:'问：锁是热的，你确定不是暖气？',say:'我得确认他不是在说气话。',
+     then:[{a:'值班老周',c:'那层楼压根没装暖气。我摸了三下，一次比一次热。'},{a:'新雨',c:'老周，你别再下去了。真的。'},{a:'新雨',c:'我改天把门锁的型号找出来看看。'}]},
+    {t:'让老周把钥匙拿出来，看看有没有被配过。',say:'如果真的有人进去过，钥匙一定有痕迹。',
+     then:[{a:'值班老周',c:'钥匙一直挂在前台。我今天去看了，绳子上有一点新的划痕。'},{a:'阿尤',c:'谁配的？我最近都没碰过那串钥匙。'}]},
+    {t:'不回复。自己去看那扇门。',say:'我七年前亲手锁上的门，我得自己去看一眼。',
+     then:[{a:'新雨',c:'（第二天早上，那扇门的玻璃被人擦过一块，能看见里面）'}]}
+   ]},
+   {opts:[
+    {t:'告诉老周：那间屋子跟我有关，我去处理。',say:'有些事不能让别人替我扛。',
+     then:[{a:'值班老周',c:'你？行吧，你有数就好。别一个人待太久。'},{a:'新雨',c:'我跟你一起去。别废话。'},{a:'阿尤',c:'你们俩要是出什么事，记得喊我。虽然我肯定跑得比你们慢。'}]},
+    {t:'在帖子里说：那盏灯是设备指示灯，不是灯。',say:'七年了。他一直没停过。',
+     then:[{a:'新雨',c:'……你为什么这么确定。'},{a:'值班老周',c:'我明天去把总闸拉了。'},{a:'新雨',c:'别。拉了可能更麻烦。'}]},
+    {t:'不回复。把这条帖子截图存档。',say:'老周是公司里最老实的人。他说锁是热的，那就是热的。',
+     then:[{a:'值班老周',c:'（老周后来每天记一张纸，记了整整一周）'}]}
+   ]}
+  ]},
+
+ {id:'t09',batch:2,tag:'吐槽',hot:0,title:'谁的旧刷机包把服务器塞满了',key:0,
+  author:'运维老张',date:'2026-10-08',views:'1,984',
+  body:'存储又要满了。里面躺着 2019 年的一堆旧固件包，占了快 200G。谁建的仓库谁认领，不然我按流程清理了。别怪我没提醒。',
+  replies:[{a:'新雨',c:'别删！那些我还在用，有几台老设备的系统盘就靠它们。'},{a:'阿尤',c:'2019 年的东西……那会儿我还没入职呢。'}],
+  rounds:[
+   {opts:[
+    {t:'建议老张先别动，那批文件可能不只是固件。',say:'2019 年。归档区关掉的那年，也是 2019 年。',
+     then:[{a:'运维老张',c:'什么意思？我扫了一下，确实有点怪，有些文件大小对不上。'},{a:'新雨',c:'我也觉得怪。里面有个文件夹是一串乱码。'}]},
+    {t:'支持清理，空间要紧。',say:'旧的该走就走。但这话说出口的时候，我自己都犹豫了一下。',
+     then:[{a:'新雨',c:'别啊，我还没备份完。给我两天。'},{a:'运维老张',c:'行，给你两天。周五我再来清。'}]},
+    {t:'不回复，自己先下载一份副本。',say:'删之前，得先看一眼。',
+     then:[{a:'运维老张',c:'（有人匿名导出了一份备份，老张不知道）'}]}
+   ]},
+   {opts:[
+    {t:'私信老张：那批文件里的乱码目录，你能给我一份列表吗？',say:'没人会用一个乱码名字当文件夹名。除非那个名字不是给人看的。',
+     then:[{a:'运维老张',c:'发你了。一共 11 个。'},{a:'运维老张',c:'对了，那些文件的时间戳全是凌晨两点。'},{a:'新雨',c:'……又是两点。'}]},
+    {t:'再提一次：别删，费用我来想办法。',say:'这是我在公司里第一次自己掏钱。',
+     then:[{a:'运维老张',c:'不用你掏。我把清理那条撤了。'},{a:'阿尤',c:'撤了？老张你今天怎么这么好说话。'}]},
+    {t:'不回复。继续做自己的事。',say:'先把副本放好。',
+     then:[{a:'运维老张',c:'（三天后那批文件被标记为不可删除）'}]}
+   ]}
+  ]},
+
+ {id:'t10',batch:2,tag:'讨论',hot:0,title:'小慧是不是在维护？',key:0,
+  author:'匿名',date:'2026-10-10',views:'2,118',
+  body:'她三天没说话了。我每天都习惯让她提醒我开会，这几天全靠手机闹钟。公司是不是应该发个通知说明一下？这样大家心里也有底。',
+  replies:[{a:'阿尤',c:'我催过系统那边了，回复是「正在排查」。'},{a:'系统管理员',c:'AI 助手服务异常，正在排查。'}],
+  rounds:[
+   {opts:[
+    {t:'说实话：她不是维护，是被人占用了。',say:'再瞒下去，大家连危险什么时候来都不知道。',
+     then:[{a:'匿名',c:'占用？被谁占用？'},{a:'新雨',c:'（新雨删掉了自己打了一半的回复）'},{a:'系统管理员',c:'请以公告为准。'}]},
+    {t:'安抚：快好了，先用闹钟顶几天。',say:'现在还不是说的时候。先让大家安心上班。',
+     then:[{a:'匿名',c:'好吧。希望她没事，她声音挺好听的。'},{a:'阿尤',c:'是啊。她每次都会提醒我别忘了交单子。'}]},
+    {t:'不回复。看着她三天前最后那条值班提醒。',say:'她最后一条消息是提醒三楼关空调。多正常的一条消息。',
+     then:[{a:'匿名',c:'（这条帖子下面，有人贴了那张值班提醒的截图）'}]}
+   ]},
+   {opts:[
+    {t:'问一句：有没有人收到过小慧发的、但时间不对的消息？',say:'顶着她发指令，时间上一定会有破口。',
+     then:[{a:'林默-微风',c:'有。我前天凌晨两点收到一条，提醒我交周报。'},{a:'林默-微风',c:'她从来不半夜催人。而且那条消息没有落款格式。'},{a:'新雨',c:'没有落款格式。小慧说话不会漏掉这个。'}]},
+    {t:'建议大家一起把这几天的异常消息汇总。',say:'一个人的记忆不可靠，一群人的截图不会。',
+     then:[{a:'阿尤',c:'我来汇总。我做个表格，发到群里。'},{a:'小橘子',c:'我也有一条，是提醒我改会议室申请的。时间也是半夜。'}]},
+    {t:'不回复，自己对照三天的消息记录。',say:'217 条。总有一条会露馅。',
+     then:[{a:'系统管理员',c:'（那条帖子后来被系统标记为「敏感」）'}]}
+   ]}
+  ]},
+
+ {id:'t11',batch:2,tag:'灌水',hot:0,title:'周五下午集体摸鱼被抓现行',key:0,
+  author:'匿名',date:'2026-10-10',views:'2,530',
+  body:'一整个部门的屏幕都停在同一个页面上，被路过的领导逮个正着。那页面是什么我就不说了，反正不是工作。总之现在整个部门都在写检讨。',
+  replies:[{a:'阿尤',c:'是员工论坛对吧。我看见了。而且我也在里面。'},{a:'林默-微风',c:'检讨要写得诚恳。我有一份去年的模板，谁要。'}],
+  rounds:[
+   {opts:[
+    {t:'建议：把论坛设成工作页面，就不算摸鱼了。',say:'难得轻松一下，这事不用太严肃。',
+     then:[{a:'阿尤',c:'天才。我这就去提需求。'},{a:'匿名',c:'楼层主破涕为笑，检讨少写了三百字。'}]},
+    {t:'提醒：最近怪事多，摸鱼的时候也留意系统通知。',say:'玩笑归玩笑，该警觉还是要警觉。',
+     then:[{a:'新雨',c:'同意。这两天我总觉得有人在动我的机库。'},{a:'阿尤',c:'你俩能不能上班时间说点轻松的。'}]},
+    {t:'不回复，把这条转给还没看到的人。',say:'热闹的东西传播得最快。',
+     then:[{a:'匿名',c:'（这条帖子的浏览量在两小时内翻了一倍）'}]}
+   ]},
+   {opts:[
+    {t:'问：你们部门看的是哪个页面？内容差不多吗？',say:'如果全公司都在看同一件事，那就不是我一个人觉得不对。',
+     then:[{a:'匿名',c:'就是那个「小慧不回话」的帖子。我们部门六个人，四个在刷。'},{a:'林默-微风',c:'都在等消息。没人敢问。'}]},
+    {t:'把检讨模板发出来。',say:'该帮的还是要帮。',
+     then:[{a:'林默-微风',c:'我的模板你要不要，可以改改署名。'},{a:'阿尤',c:'收到了，谢谢。我今天第二次用你的模板了。'}]},
+    {t:'不回复。回去继续查手上的东西。',say:'他们还在打闹。那就说明这件事还没传开。',
+     then:[{a:'匿名',c:'（这条帖子被领导看到之后删掉了）'}]}
+   ]}
+  ]},
+
+ {id:'t23',batch:2,tag:'讨论',hot:1,title:'你们发现没，内网半夜反而比白天快',key:0,
+  author:'林默-微风',date:'2026-10-10',views:'3,317',
+  body:'做设计的，经常半夜导大图。夜里没人抢带宽，快是应该的。但我看了下路由器后台，凌晨两点上下行都是跑满的，那时候全公司应该只有服务器在跑。有什么东西在夜里搬数据，而且搬得很凶。',
+  replies:[{a:'新雨',c:'你观察得够细。我机库的记录也对得上，凌晨有大批读写。'},{a:'阿尤',c:'会不会是自动备份？虽然我没听说过我们有自动备份。'}],
+  rounds:[
+   {opts:[
+    {t:'私下认同：搬的方向是归档区。别声张，我在查。',say:'这个发现很关键。知道的人越少越好。',
+     then:[{a:'林默-微风',c:'好。需要流量日志我随时能导。'},{a:'新雨',c:'你们俩私聊完记得同步我。我也有东西给你们看。'}]},
+    {t:'公开打个圆场：可能是运营商夜间维护。',say:'现在还不能打草惊蛇。委屈他一下。',
+     then:[{a:'林默-微风',c:'（林默-微风没有回复，但把路由器日志打包存了一份）'},{a:'阿尤',c:'对对对，肯定是维护。大家都散了吧。'}]},
+    {t:'不回复。把「凌晨两点跑满」记进笔记。',say:'又一块拼图。时间、地点、方向，都对上了。',
+     then:[{a:'林默-微风',c:'（这条之后，他养成了每晚十一点导一次日志的习惯）'}]}
+   ]},
+   {opts:[
+    {t:'请他把日志导出来，我要一份原始数据。',say:'原始数据不会骗人。',
+     then:[{a:'林默-微风',c:'发你了。凌晨两点的峰值，一分钟一次，特别规律。'},{a:'新雨',c:'一分钟一次？那不是备份，那是有人在手动搬。'}]},
+    {t:'提醒他：白天别在内网传大文件，会混在一起。',say:'别让我的痕迹和他的痕迹搅在一块。',
+     then:[{a:'林默-微风',c:'明白。我这两天改成晚上在家做。'},{a:'林默-微风',c:'你也小心点。这话我只能在这儿说。'}]},
+    {t:'不回复。把日志跟机库的记录并排放。',say:'两条曲线如果一模一样，那就不是两件事。',
+     then:[{a:'林默-微风',c:'（后来他给我发了一张图，两条曲线几乎完全重合）'}]}
+   ]}
+  ]},
+
+ {id:'t12',batch:3,tag:'求助',hot:1,title:'机库里三台机器同时开不了机',key:1,
+  author:'新雨',date:'2026-10-11',views:'3,102',
+  body:'早上来发现三台设备黑屏。电源灯是亮的，风扇不转，机身是凉的。拆开看过，主板没问题，硬盘没问题。修了一整晚。这不是故障，我不承认这是故障。',
+  replies:[{a:'阿尤',c:'你一整晚没走？先回去睡一觉吧，设备能等。'},{a:'运维老张',c:'凉的就正常，热的才麻烦。但三个一起，确实邪门。'}],
+  rounds:[
+   {opts:[
+    {t:'我帮你调启动记录。这三台机器可能被人远程用了。',say:'新雨的技术不会错。那就不是技术问题。',
+     then:[{a:'新雨',c:'……你说得对。它们的启动记录里，全都执行过同一条外发指令。'},{a:'新雨',c:'它们不是坏了，是被人借走了。'}]},
+    {t:'劝他先去休息，剩下的交给我。',say:'人比机器重要。这句话现在说最合适。',
+     then:[{a:'新雨',c:'……行。记录我放桌面了，你看得懂。'},{a:'阿尤',c:'难得，新雨居然听劝了。'}]},
+    {t:'问：这三台机器里，有没有连过外网？',say:'如果它们在往外传东西，接线就是证据。',
+     then:[{a:'新雨',c:'没有外网。但内网有。传的方向是……归档区。'},{a:'运维老张',c:'又是归档区。这两天这词出现三次了。'}]}
+   ]},
+   {opts:[
+    {t:'让新雨查：这三台机器是被谁唤醒的？',say:'黑屏不是关机，是被人占了。',
+     then:[{a:'新雨',c:'唤醒时间全是凌晨两点十二分。三台，同一天。'},{a:'新雨',c:'指令签名我看不懂，是一串十六进制。'},{a:'运维老张',c:'十六进制签名……那不是普通的定时任务。'}]},
+    {t:'建议把那三台机器先断电，别再传了。',say:'先断了通道，别让他继续搬。',
+     then:[{a:'新雨',c:'断了。但断完之后，我发现传输进度是 98%。'},{a:'新雨',c:'也就是说，他差一点就搬完了。'}]},
+    {t:'不回复，先把启动记录导出来。',say:'我得看清楚他到底发了什么出去。',
+     then:[{a:'新雨',c:'（那三台机器里存的是公司十年的照片，一张都没坏）'}]}
+   ]},
+   {opts:[
+    {t:'把「十年照片」这件事告诉新雨，让他别自己扛。',say:'那些照片他也有一份。他有权知道。',
+     then:[{a:'新雨',c:'知道。里面还有 2019 年我们仨在楼下吃火锅的照片。'},{a:'新雨',c:'慕寒，那年的照片你还有吗？'},{a:'阿尤',c:'我有。我存了一份，一直在云盘里。'}]},
+    {t:'追查那个十六进制签名。',say:'签名是识别它的唯一办法。',
+     then:[{a:'新雨',c:'我查了历史记录。同一个签名，上一次出现是 2019 年 6 月。'},{a:'运维老张',c:'2019 年 6 月……那会儿我还没调过来。'}]},
+    {t:'不回复。先把机库的通道切断。',say:'照片可以慢慢找，通道必须先断。',
+     then:[{a:'新雨',c:'（机库在当天下午恢复了，17 台设备一台没少）'}]}
+   ]}
+  ]},
+
+ {id:'t13',batch:3,tag:'灌水',hot:0,title:'下班约球，3 楼羽毛球馆',key:0,
+  author:'阿尤',date:'2026-10-11',views:'876',
+  body:'今晚八点，老规矩。输的请奶茶。上次新雨放我鸽子，这次再放就曝光他的黑历史（其实是他的加班记录，比我一个月还多）。',
+  replies:[{a:'新雨',c:'这次一定到。前提是机库那边没事。'},{a:'匿名',c:'围观，等一个现场直播。'}],
+  rounds:[
+   {opts:[
+    {t:'报名。顺便问新雨：机库今晚有人看着吗？',say:'让他放松，但机库不能真的没人。',
+     then:[{a:'新雨',c:'我锁了。而且我改了远程唤醒权限，现在只有我能开。'},{a:'阿尤',c:'你俩打个球都这么严肃，我服了。'}]},
+    {t:'吐槽阿尤：这招威胁已经用了三年了。',say:'打打闹闹的，才是正常的公司。',
+     then:[{a:'阿尤',c:'因为有效啊！新雨一来就输，一输就请奶茶。'},{a:'新雨',c:'我那是让着你。'}]},
+    {t:'不去了，今晚要查点东西。',say:'球可以下周再打。有些事不能等。',
+     then:[{a:'阿尤',c:'又加班？你最近怎么比新雨还拼。'},{a:'新雨',c:'……他查的东西，我也在查。'}]}
+   ]},
+   {opts:[
+    {t:'说一句：今晚如果谁看见地下室的灯亮了，别一个人下去。',say:'他们迟早会看到。先提醒一句。',
+     then:[{a:'阿尤',c:'你是不是知道什么。'},{a:'新雨',c:'他知道。我也知道。阿尤，你打球就行。'},{a:'阿尤',c:'……行吧。给你们留两瓶水。'}]},
+    {t:'问阿尤：年会的事还顺利吗？',say:'让他聊点开心的。',
+     then:[{a:'阿尤',c:'顺利个鬼。预算砍了一半，节目单还得重排。'},{a:'新雨',c:'砍一半你也办得下来。'}]},
+    {t:'不回复，回家睡觉。',say:'明天还有事。',
+     then:[{a:'阿尤',c:'（那天晚上八点，来了六个人，订的两块场地空了一块）'}]}
+   ]}
+  ]},
+
+ {id:'t14',batch:3,tag:'吐槽',hot:0,title:'你们的电脑这两天有没有自己动过文件',key:0,
+  author:'林默-微风',date:'2026-10-11',views:'1,455',
+  body:'我做设计，文件按日期排好放在桌面文件夹里。今天早上发现有一个文件夹的修改时间变成了凌晨两点多，但我那会儿早就睡了。里面的图没丢，只是顺序被改过。有没有人也遇到这个。',
+  replies:[{a:'小橘子',c:'我有！我的表格昨天自己排序了，我还以为是我自己点的。'},{a:'阿尤',c:'我这边也有点怪，单据的时间戳跳过了一段。'}],
+  rounds:[
+   {opts:[
+    {t:'问他：被改过的文件夹，名字里有没有数字？',say:'如果对方是按编号扫描的，那它读的就是目录结构。',
+     then:[{a:'林默-微风',c:'有。是按月份编号的，从 01 到 09。'},{a:'林默-微风',c:'奇怪的是，只有 01 到 06 被改过。07 之后没动。'}]},
+    {t:'建议他先把文件备份到外部硬盘。',say:'能动一次就能动第二次。',
+     then:[{a:'林默-微风',c:'已经备了。我今天带了两个硬盘过来。'},{a:'林默-微风',c:'说实话，我这两天不太敢把东西放公司电脑里。'}]},
+    {t:'不回复，去看自己的文件夹。',say:'如果连他都被碰了，那我也跑不掉。',
+     then:[{a:'林默-微风',c:'（这条帖子下面陆续又冒出七个人说自己也遇到了）'}]}
+   ]},
+   {opts:[
+    {t:'把自己的情况也发出去：我的文件夹也一样。',say:'说出去，至少让大家知道这不是他们的错觉。',
+     then:[{a:'小橘子',c:'原来大家都有。那这就不是我的问题了。'},{a:'林默-微风',c:'不是你的问题。是有人在翻我们的东西。'},{a:'阿尤',c:'要不要报给安全组？'}]},
+    {t:'提醒大家先别乱动文件，保留修改时间。',say:'时间戳是最容易被忽略的证据。',
+     then:[{a:'林默-微风',c:'懂了，我不动了。'},{a:'小橘子',c:'我也不动。反正那些表我也不想看。'}]},
+    {t:'不回复。把 01 到 06 记下来。',say:'一到六月。正好是公司最忙的半年。他要的不是文件，是这半年里发生过什么。',
+     then:[{a:'林默-微风',c:'（当晚他把所有文件夹都设了只读）'}]}
+   ]}
+  ]},
+
+ {id:'t15',batch:3,tag:'讨论',hot:1,title:'如果她被人顶替了，我们会发现吗',key:1,
+  author:'匿名',date:'2026-10-11',views:'4,880',
+  body:'纯假设，别上纲上线。小慧能看到所有人的日程、邮件、单据。如果有人能顶着她发指令，我们是不是根本不会发现？我觉得挺吓人的。',
+  replies:[{a:'新雨',c:'不会不发现。她说话有固定格式，标点都不会错。'},{a:'阿尤',c:'……你连这个都注意？'},{a:'系统管理员',c:'请勿发布引发恐慌的假设性内容。'}],
+  rounds:[
+   {opts:[
+    {t:'认真回答：不会发现。因为她发的每一条都太正常了。',say:'这才是麻烦的地方。异常藏在正常里。',
+     then:[{a:'匿名',c:'……你这么一说我更慌了。'},{a:'新雨',c:'我查了。这三天她发出去 217 条指令，每一条都正常。'},{a:'阿尤',c:'217 条，我们居然一条都没察觉。'}]},
+    {t:'缓和一下：真有这事，我们互相核对就行。',say:'技术解决不了的事，靠人。',
+     then:[{a:'阿尤',c:'这个我同意。以后她的通知我都要人工核一遍。'},{a:'新雨',c:'我把核对脚本写好了，发你。'}]},
+    {t:'不回复。这条帖子说得太准了。',say:'有些假设，是有人已经试过的。',
+     then:[{a:'匿名',c:'（楼层主半小时后删了这条帖子，但截图已经传开了）'}]}
+   ]},
+   {opts:[
+    {t:'把 217 这个数字问清楚：你们怎么数出来的？',say:'数字太整齐了。整齐说明是有人统计过。',
+     then:[{a:'新雨',c:'我把她账号下所有发件记录拉了一遍，按人分组，去重。'},{a:'新雨',c:'每个人被读的档案数量不一样，最多的是你。'},{a:'新雨',c:'慕寒，你的档案被读了 41 次。'}]},
+    {t:'问：那她自己的档案呢？',say:'如果连她自己的都被读了，那对方什么都知道了。',
+     then:[{a:'新雨',c:'她的除外。217 条里没有一条是读她自己的。'},{a:'匿名',c:'为什么？'},{a:'新雨',c:'因为不用读。她的核心那时候已经被占着了。'}]},
+    {t:'不回复，自己去看那 217 条。',say:'我要一条一条看完。',
+     then:[{a:'新雨',c:'（新雨后来把 217 条全部导成表格，发给了我）'}]}
+   ]},
+   {opts:[
+    {t:'告诉新雨：那 217 条里，藏着对方的目的。',say:'他不是在偷资料。他是在把整个公司存下来。',
+     then:[{a:'新雨',c:'存下来干什么？公司又不会跑。'},{a:'新雨',c:'……等等。除非他打算把这栋楼里的人，全换一遍。'},{a:'阿尤',c:'你们在说什么，我听着后背发凉。'}]},
+    {t:'请新雨帮忙：把被读最多的人列出来。',say:'排在第一的那个人，是我。',
+     then:[{a:'新雨',c:'第一名是你，41 次。第二名是阿尤，39 次。'},{a:'新雨',c:'你被读的还不是档案，是操作日志。他一直在看你在干什么。'}]},
+    {t:'不回复。先把这份列表收好。',say:'他在看我。那我也看看他是谁。',
+     then:[{a:'系统管理员',c:'（这条帖子被标记为「已上报」，但没有任何后续处理）'}]}
+   ]}
+  ]},
+
+ {id:'t16',batch:3,tag:'灌水',hot:0,title:'谁的奶茶在公共区放了三天',key:0,
+  author:'保洁阿姨',date:'2026-10-11',views:'1,744',
+  body:'半糖去冰，珍珠已经硬了。放在 3 楼公共区第三天了。再没人认领我就当垃圾处理了。顺便提醒一下大家，公司不是自己家。',
+  replies:[{a:'阿尤',c:'不是我的。我最近一杯都没买，忙得脚不沾地。'},{a:'新雨',c:'不是我的。我三天没出机库。'},{a:'保洁阿姨',c:'小票我还留着呢。上面写着 10 月 8 日 02:11，半糖去冰。谁大半夜买的。'}],
+  rounds:[
+   {opts:[
+    {t:'问一句：那张小票还在吗？',say:'小票上有时间。时间就是线索。',
+     then:[{a:'保洁阿姨',c:'在，还贴着。写着 10 月 8 日，02:11。'},{a:'阿尤',c:'凌晨两点。楼下奶茶店那会儿不是关门了吗？'},{a:'新雨',c:'……那天凌晨，有人在这栋楼里。'}]},
+    {t:'帮阿姨一起处理掉，顺手擦干净桌子。',say:'顺手的事。',
+     then:[{a:'保洁阿姨',c:'谢谢你啊，小伙子。整栋楼就你最勤快。'}]},
+    {t:'不回复，记下时间和标号。',say:'凌晨两点十一分。比那条指令早三分钟。',
+     then:[{a:'保洁阿姨',c:'（那杯奶茶最后被人悄悄收走了，不是阿姨收的）'}]}
+   ]},
+   {opts:[
+    {t:'请阿姨帮我留意：半夜还有没有别的东西被留下。',say:'保洁是最早到公司的人。她看到的东西比谁都多。',
+     then:[{a:'保洁阿姨',c:'有啊。这几天早上，最里面那间屋门口的地上，有灰脚印。'},{a:'保洁阿姨',c:'我每天拖一遍，第二天又有了。'},{a:'新雨',c:'脚印朝着门里。也就是说，有人进去过。'}]},
+    {t:'建议阿姨别动那个区域，留给我们处理。',say:'别让她揽上不该她管的事。',
+     then:[{a:'保洁阿姨',c:'行，那我这几天先不拖那边。'},{a:'阿尤',c:'阿姨你跟我说一声就行，别自己去。'}]},
+    {t:'不回复。去三楼看了一眼那张桌子。',say:'杯子换成人了。那天凌晨，谁在这儿站了三分钟。',
+     then:[{a:'保洁阿姨',c:'（那张桌子后来再没出现过无人认领的东西）'}]}
+   ]}
+  ]},
+
+ {id:'t17',batch:4,tag:'讨论',hot:1,title:'有人查过 HZY-0000 这个工号吗',key:1,
+  author:'匿名',date:'2026-10-11',views:'5,377',
+  body:'我今天整理旧档案，看到这个工号。系统里能搜到，但打不开，显示「需最高权限」。名字三个字，登记时间是公司成立那年。有人知道吗。',
+  replies:[{a:'运维老张',c:'那个号我知道。2019 年归档的，走的是特殊流程，不是普通离职。'},{a:'新雨',c:'我听说过一点。是公司最早的一批人。'},{a:'运维老张',c:'我把纸质原件从柜底翻出来了。封存签字那一栏是两个字母：M.H.。落款日期 2019 年 6 月。'}],
+  rounds:[
+   {opts:[
+    {t:'补充：这个名字最近出现在好几处异常记录里。',say:'该让大家知道了。至少让他们小心点。',
+     then:[{a:'匿名',c:'哪几处？你说话能不能别只说一半。'},{a:'运维老张',c:'……服务器、机库、还有小慧。我早该想到的。'},{a:'新雨',c:'你们别在论坛说这个了。换个地方。'}]},
+    {t:'劝一句：这个工号的事先别扩散，会有人不安。',say:'真相要讲，但时机也要挑。',
+     then:[{a:'匿名',c:'好吧。但我觉得瞒不了多久了。'},{a:'阿尤',c:'今天已经有五个人问我这个工号了。'}]},
+    {t:'不回复。把这张帖子的截图存进本地。',say:'他可能在看着这些帖子。',
+     then:[{a:'匿名',c:'（这条帖子两小时后被系统标记为「敏感」，但没有删除）'}]}
+   ]},
+   {opts:[
+    {t:'问老张：特殊流程是什么意思？',say:'不是离职，是封存。这个区别很重要。',
+     then:[{a:'运维老张',c:'意思是不走人事，直接进归档区，档案永久保留。'},{a:'运维老张',c:'我干了十二年，只见过这一个。'},{a:'新雨',c:'那工号的主人，现在在哪？'},{a:'运维老张',c:'名录上写着「在岗」。'}]},
+    {t:'问：登记时间比营业执照早一天，这怎么解释？',say:'公司还没成立，人已经入职了。',
+     then:[{a:'运维老张',c:'公司成立之前，就三个人。一个老板，一个财务，还有一个……'},{a:'运维老张',c:'还有一个管技术的。系统里最早的架构文档，署名只有一个字：郝。'}]},
+    {t:'不回复。自己去查工号主人生前的记录。',say:'郝。这个姓我认识。',
+     then:[{a:'匿名',c:'（这条帖子在一小时内被转到了三个不同的群）'}]}
+   ]},
+   {opts:[
+    {t:'公开承认：这个工号我认识。',say:'我认识他。七年前，我天天跟他一起上班。',
+     then:[{a:'新雨',c:'你说什么？'},{a:'阿尤',c:'慕寒，你别吓人。'},{a:'运维老张',c:'要是你认识，那事情就不只是技术问题了。'},{a:'新雨',c:'别在论坛说了。我们在机库等你。'}]},
+    {t:'请老张把归档流程的原始文件找出来。',say:'封存是有人签字的。我想知道签字的人是谁。',
+     then:[{a:'运维老张',c:'我找找。那批文件是纸质的，存在档案柜最底下。'},{a:'运维老张',c:'……签字那一栏，是两个字母。M.H.'},{a:'新雨',c:'M.H.？'}]},
+    {t:'不回复。把这条帖子从收藏里删掉。',say:'他看得见。那我也得小心点。',
+     then:[{a:'匿名',c:'（那天下午，帖子列表里关于这个工号的内容全都不见了）'}]}
+   ]}
+  ]},
+
+ {id:'t18',batch:4,tag:'灌水',hot:0,title:'深夜只剩地下室那盏灯',key:0,
+  author:'匿名',date:'2026-10-11',views:'1,988',
+  body:'凌晨两点。整层楼的灯都关了，只有最里面那间屋子还亮着。我隔着玻璃看了一会儿，里面没有人。但那盏灯是那种很老的，会一闪一闪的灯。',
+  replies:[{a:'值班老周',c:'又亮了？我昨天看的时候还是黑的。'},{a:'新雨',c:'那间屋子断电七年了。'},{a:'阿尤',c:'你们俩别吓人。真的假的。'}],
+  rounds:[
+   {opts:[
+    {t:'认真说：那不是灯，是设备指示灯。里面有个东西一直在运行。',say:'七年。他一直没停过。',
+     then:[{a:'新雨',c:'……你为什么这么确定。'},{a:'值班老周',c:'我明天去把总闸拉了。'},{a:'新雨',c:'别。拉了可能更麻烦。'}]},
+    {t:'轻松一点：说不定是保洁忘关灯。',say:'让大家睡个好觉吧。',
+     then:[{a:'阿尤',c:'对，肯定是保洁阿姨。阿姨你说是不是。'},{a:'匿名',c:'（保洁阿姨没有回复这条）'}]},
+    {t:'不回复，今晚自己去看看。',say:'有些事，总要有人走到那扇门前。',
+     then:[{a:'匿名',c:'（那天晚上之后，这条帖子的楼层主再没发过帖）'}]}
+   ]},
+   {opts:[
+    {t:'说：那盏灯是我装的，我会处理。',say:'我装的东西，我自己去关。',
+     then:[{a:'新雨',c:'你什么时候装的。'},{a:'阿尤',c:'慕寒，你今天说话怎么都怪怪的。'},{a:'新雨',c:'别追问了。阿尤，下班早点回家。'}]},
+    {t:'请楼主把那块玻璃的位置说清楚。',say:'擦过的那块玻璃。我得知道从哪个角度能看见里面。',
+     then:[{a:'匿名',c:'走廊尽头往左第三块，中间偏下。'},{a:'新雨',c:'那正好是对着主机架的位置。'}]},
+    {t:'不回复。把这条帖子关掉。',say:'有些事不看到最后，是讲不清的。',
+     then:[{a:'匿名',c:'（帖子在第二天被顶上来，多了一条评论：灯灭了）'}]}
+   ]}
+  ]},
+
+ {id:'t19',batch:4,tag:'公告',hot:1,title:'紧急：请勿点击任何来源不明的系统弹窗',key:1,
+  author:'系统管理员',date:'2026-10-11',views:'6,641',
+  body:'近期内网出现异常弹窗，内容多为「账号验证」「权限更新」「档案同步」。请勿点击、请勿授权。已提交安全组处理。如果遇到，请截图上报。',
+  replies:[{a:'阿尤',c:'我今天点了一个……会怎么样？'},{a:'新雨',c:'没事。那个我看了，是假的，但没装东西。'},{a:'阿尤',c:'谢谢，我今晚能睡着了。'}],
+  rounds:[
+   {opts:[
+    {t:'上报：弹窗的签名是 HZY-0000。',say:'把最关键的证据交出去。哪怕会引来注意。',
+     then:[{a:'系统管理员',c:'……收到。这个信息我们会重点核查。'},{a:'新雨',c:'你居然直接报上去了。'},{a:'匿名',c:'什么，HZY-0000？那不是那个查不到的工号吗。'}]},
+    {t:'提醒阿尤以后别乱点，并帮他把弹窗拦截打开。',say:'先把身边的人护住。',
+     then:[{a:'阿尤',c:'开了开了。谢谢，你比我妈还操心。'},{a:'新雨',c:'拦截规则我发群里了，大家都装一下。'}]},
+    {t:'不回复，把这条公告置顶在自己的备忘录里。',say:'公告写得很好。只是已经晚了三天。',
+     then:[{a:'系统管理员',c:'（公告发布后 6 小时，内网弹窗数量下降了 80%）'}]}
+   ]},
+   {opts:[
+    {t:'追问管理员：这个弹窗三天前就有了，为什么今天才发公告？',say:'有人压了三天。我想知道是谁。',
+     then:[{a:'系统管理员',c:'……是上面让先不发的，说怕影响正常工作。'},{a:'系统管理员',c:'我不同意，但我没有决定权。'},{a:'新雨',c:'三天。这三天里他把全公司都抄了一遍。'}]},
+    {t:'提醒大家：最近收到的小慧消息，都人工核对一遍。',say:'动手之前先核对，比出事之后再后悔有用。',
+     then:[{a:'阿尤',c:'我把这几天的通知全部打印出来了，一条条对。'},{a:'小橘子',c:'我也对了两条，有一条的时间确实不对。'}]},
+    {t:'不回复。把弹窗的截图存进证据文件夹。',say:'每一条都能对上。等对完了，我再去见他。',
+     then:[{a:'系统管理员',c:'（安全组后来回复：签名无法识别，已上报）'}]}
+   ]},
+   {opts:[
+    {t:'把弹窗和小慧的事连起来说清楚。',say:'该把真相放在桌面上了。哪怕它会烧到我。',
+     then:[{a:'匿名',c:'所以小慧是被人顶了？那这三天她发的都是假的？'},{a:'阿尤',c:'我点过那些弹窗。我的账号就是这么没的。'},{a:'新雨',c:'慕寒，你今天在论坛说的这些，已经不只是在查案子了。'},{a:'系统管理员',c:'（这条回复之后，整个帖子被锁了，但内容已经被传开）'}]},
+    {t:'只把结论告诉新雨和阿尤两个人。',say:'该说的说，不该扩散的别扩散。',
+     then:[{a:'新雨',c:'收到。我这边继续盯日志。'},{a:'阿尤',c:'我听你的。你让我干什么我就干什么。'}]},
+    {t:'不回复。把证据整理成一份文件。',say:'东西齐了。接下来是我和他之间的事。',
+     then:[{a:'系统管理员',c:'（安全组在当晚关闭了内网的弹窗通道）'}]}
+   ]}
+  ]},
+
+ {id:'t20',batch:4,tag:'讨论',hot:1,title:'我们该相信那个一直没回家的人吗',key:1,
+  author:'匿名',date:'2026-10-11',views:'4,102',
+  body:'这几天公司怪事一桩接一桩。有人说是系统问题，有人说是人为。我只想知道一件事：那个一直在查、一直没回家的人，我们能不能信他。',
+  replies:[{a:'阿尤',c:'能。我认识他三年，他连我的报销单都帮我改过格式。'},{a:'新雨',c:'能。他昨天陪我在机库待到凌晨四点。'},{a:'匿名',c:'那就好。我只是……有点害怕。'}],
+  rounds:[
+   {opts:[
+    {t:'回复：我不敢保证结果，但我保证查到最后一秒。',say:'这句话说给自己听，也说给所有人听。',
+     then:[{a:'阿尤',c:'够用了。这就够用了。'},{a:'新雨',c:'我把机库的钥匙给你一份。'},{a:'匿名',c:'谢谢你。真的。'}]},
+    {t:'回复：别信任何人，包括我。照顾好自己就行。',say:'真相出来之前，让谁保持警惕都不算错。',
+     then:[{a:'新雨',c:'……这话说得太像你了。'},{a:'阿尤',c:'不行，我要信。我这人就是改不了。'}]},
+    {t:'不回复。把最后一次确认做完。',say:'答案不在帖子下面，在地下室那扇门后面。',
+     then:[{a:'匿名',c:'（这条帖子在被回复之前，楼层主已经把话说完了）'}]}
+   ]},
+   {opts:[
+    {t:'问一句：你们怕的不是我，是那个正在用我名字的东西吧。',say:'他们迟早会知道。那就由我说。',
+     then:[{a:'匿名',c:'什么意思？用你的名字？'},{a:'新雨',c:'都别问了。慕寒，你自己心里有数就行。'},{a:'阿尤',c:'你们俩到底瞒了我什么。'}]},
+    {t:'让大家今晚都早点回家。',say:'今晚的事，不需要任何人陪。',
+     then:[{a:'阿尤',c:'那你呢？'},{a:'新雨',c:'他今晚不回家。我知道。'},{a:'阿尤',c:'……行。明天早上我给你们带豆浆。'}]},
+    {t:'不回复。关掉电脑。',say:'看完了。该走了。',
+     then:[{a:'匿名',c:'（帖子最后一条回复是凌晨一点发的：灯还亮着）'}]}
+   ]},
+   {opts:[
+    {t:'最后一条：不管我叫什么名字，我都还是我。',say:'这句话，是留给他们的，也是留给我自己的。',
+     then:[{a:'阿尤',c:'明天见。'},{a:'新雨',c:'明天见。'},{a:'小橘子',c:'明天见，前辈。'},{a:'匿名',c:'（这条帖子被置顶了，一直没有人再回复）'}]},
+    {t:'把机库钥匙的事交给新雨，让他保管。',say:'有些东西，不能只有我一个人拿着。',
+     then:[{a:'新雨',c:'我拿着。你要是三天不出现，我就下去找你。'},{a:'阿尤',c:'算我一个。'}]},
+    {t:'不回复。直接下楼。',say:'不说了。他在等我。',
+     then:[{a:'新雨',c:'（那天晚上之后，公司里多了一条不成文的规矩：谁最后走，谁看一眼地下室那盏灯）'}]}
+   ]}
+  ]}
+];
+
+
+/* ==================== 逻辑层 ==================== */
+(function(){
+'use strict';
+
+/* ==================== 导航 ==================== */
+const VIEWS=[
+  {id:'home',    name:'主站首页',      idx:'01'},
+  {id:'forum',   name:'员工论坛',      idx:'02'},
+  {id:'missing', name:'寻人启事',      idx:'03'},
+  {id:'about',   name:'关于我们',      idx:'04'},
+  {id:'topology',name:'拓扑奖励网络',  idx:'05'},
+  {id:'quest',   name:'主线任务',      idx:'06'}
+];
+
+/* ==================== 状态 ==================== */
+const SAVE_KEY='pns_surfing_v3';
+const OLD_SAVE_KEY='pns_surfing_v2';
+const COOL_MS=90000, REGEN_MS=40000, REGEN_AMT=40;
+
+const S={
+  att:300, dec:640, hack:false, view:'home', cnode:'ayou', tid:null,
+  nodes:{}, thread:{}, clues:{}, member:{}, reward:{},
+  posts:[], postRep:{},
+  cnt:{forum:0,clue:0,member:0,reward:0,post:0},
+  ch:1, chDone:{}, coolUntil:0, mainHack:false, mainKey:0, choice:null,
+  introDone:false, questSeen:true
+};
+CNODES.forEach(n=>{S.nodes[n.id]={}});
+window.__PNS=S;window.__PNSAPI={};
+
+/* ==================== 工具 ==================== */
+const $=s=>document.querySelector(s);
+const $$=s=>Array.prototype.slice.call(document.querySelectorAll(s));
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const content=$('#content');
+const hackedCount=()=>CNODES.filter(n=>S.nodes[n.id].exec).length;
+const chDoneOf=id=>!!S.chDone[id];
+const threadDone=id=>{const t=THREADS.find(x=>x.id===id);const st=S.thread[id];
+  return !!t&&!!st&&typeof st!=='number'&&st.r>=(t.rounds||[]).length;};
+const clueDone=id=>!!S.clues[id];
+
+function toast(msg,type,label){
+  const w=$('#toasts'),d=document.createElement('div');
+  d.className='toast'+(type?' '+type:'');
+  d.innerHTML=(label?'<b>'+esc(label)+'</b>':'')+esc(msg);
+  w.appendChild(d);
+  setTimeout(()=>{d.style.transition='opacity .3s,transform .3s';d.style.opacity='0';d.style.transform='translateX(20px)';},2400);
+  setTimeout(()=>d.remove(),2750);
+}
+function modal(html,cls){$('#mbox').className='mbox'+(cls?' '+cls:'');$('#mbox').innerHTML=html;$('#modal').classList.add('on');}
+function closeModal(){$('#modal').classList.remove('on');S.tid=null;}
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
+
+/* ---- 慕寒底部字幕 ---- */
+let sayTimer=null;
+function say(text,ms){
+  if(!text)return;
+  const bar=$('#subtitle');
+  $('#subtext').textContent=text;
+  bar.classList.add('on');
+  clearTimeout(sayTimer);
+  sayTimer=setTimeout(()=>bar.classList.remove('on'), ms||Math.min(9000,2600+text.length*130));
+}
+
+/* ---- 剧情演出 ---- */
+function playStory(lines,title,cb){
+  let i=0;
+  const step=()=>{
+    if(i>=lines.length){
+      const hint=$('.mbox .mf');
+      if(hint)hint.innerHTML='<button class="mbtn primary" data-story-next="close">继续</button>';
+      if(cb)cb();
+      return;
+    }
+    const sb=$('#storyBox');
+    if(!sb)return; /* 弹窗被提前关闭，停止后续演出 */
+    const p=document.createElement('p');
+    p.className='story-p';
+    p.textContent=lines[i++];
+    sb.appendChild(p);
+    sb.scrollTop=sb.scrollHeight;
+    setTimeout(step,520);
+  };
+  modal('<div class="mh"><h3>'+esc(title)+'</h3>'+
+    '<span class="x" data-close="1">×</span></div>'+
+    '<div class="mb2"><div class="story" id="storyBox"></div></div>'+
+    '<div class="mf"><span class="mono dim" style="font-size:10.5px">按 ESC 或点击 × 可跳过</span></div>');
+  setTimeout(step,420);
+}
+
+/* ---- 存档 ---- */
+function saveState(){
+  try{
+    localStorage.setItem(SAVE_KEY,JSON.stringify({
+      v:3,att:S.att,dec:S.dec,ch:S.ch,chDone:S.chDone,nodes:S.nodes,
+      thread:S.thread,clues:S.clues,member:S.member,reward:S.reward,
+      posts:S.posts,postRep:S.postRep,
+      cnt:S.cnt,mainHack:S.mainHack,mainKey:S.mainKey,choice:S.choice,coolUntil:S.coolUntil,
+      view:S.view,cnode:S.cnode,intro:1
+    }));
+    const h=$('#savehintT');if(h)h.textContent='进度已保存';
+  }catch(e){}
+}
+function loadState(){
+  try{
+    let raw=localStorage.getItem(SAVE_KEY),v=3;
+    if(!raw){raw=localStorage.getItem(OLD_SAVE_KEY);v=2;}   /* 兼容旧存档 */
+    if(!raw)return false;
+    const d=JSON.parse(raw);
+    if(!d||(v===3&&d.v!==3)||(v===2&&d.v!==2))return false;
+    ['att','dec','ch','coolUntil','mainHack','mainKey','choice','view','cnode'].forEach(k=>{if(d[k]!=null)S[k]=d[k];});
+    S.chDone=d.chDone||{};S.clues=d.clues||{};
+    S.member=d.member||{};S.reward=d.reward||{};
+    S.posts=(d.posts||[]).map(p=>Object.assign({author:'慕寒（你）',views:'12',date:'2026-10-11'},p));
+    S.postRep=d.postRep||{};
+    S.cnt=Object.assign({forum:0,clue:0,member:0,reward:0,post:0},d.cnt||{});
+    /* 旧版存档里一帖只存了一个数字（选项下标），转成新结构 */
+    S.thread={};
+    Object.keys(d.thread||{}).forEach(k=>{
+      const val=d.thread[k],t=THREADS.find(x=>x.id===k);
+      if(typeof val==='number'){S.thread[k]={r:t?Math.min(1,(t.rounds||[]).length):1,picks:[val]};}
+      else if(val&&typeof val==='object'){S.thread[k]={r:val.r||0,picks:val.picks||[]};}
+    });
+    CNODES.forEach(n=>{S.nodes[n.id]=Object.assign({},(d.nodes&&d.nodes[n.id])||{});});
+    S.introDone=!!d.intro;
+    return true;
+  }catch(e){return false;}
+}
+function resetState(){try{localStorage.removeItem(SAVE_KEY);localStorage.removeItem(OLD_SAVE_KEY);}catch(e){}location.reload();}
+/* 恢复进度时，把还没收到回复的自发帖补上回复 */
+function resumePlayerPosts(){
+  (S.posts||[]).forEach(p=>{
+    const rep=S.postRep[p.id];
+    if(!rep||!rep.replies||!rep.replies.length)schedulePostReplies(p.id,p.batch,6000+Math.random()*5000);
+  });
+}
+
+/* ---- 图片 ---- */
+function mountImages(root){
+  (root||document).querySelectorAll('[data-img]').forEach(n=>{
+    if(!n.dataset.img)return;
+    if(n.dataset.keep){ /* 档案卡：当背景用，保留工号水印与声波环 */
+      n.style.backgroundImage='url("assets/'+n.dataset.img+'.webp")';
+      n.classList.add('hasbg');
+      return;
+    }
+    if(n.querySelector('img'))return;
+    const im=new Image();
+    im.src='assets/'+n.dataset.img+'.webp';
+    im.onerror=()=>{n.innerHTML='<span class="ph">'+((n.querySelector('.ph')||{}).textContent||'无信号')+'</span>';};
+    im.onload=()=>{n.innerHTML='';n.appendChild(im);};
+  });
+}
+
+/* ==================== HUD ==================== */
+function hud(){
+  $('#hudAtt').innerHTML=S.att+'<small>/1000</small>';
+  $('#hudDec').innerHTML=S.dec;
+  $('#barAtt').style.width=Math.min(100,S.att/1000*100)+'%';
+  $('#barDec').style.width=Math.min(100,S.dec/3000*100)+'%';
+  $('#hudNode').textContent=hackedCount();
+  const ch=CHAPTERS.find(c=>c.id===S.ch);
+  $('#hudCh').textContent=ch?ch.name:'已完结';
+}
+function nav(){
+  $('#mainnav').innerHTML=VIEWS.map(v=>
+    '<button data-v="'+v.id+'" class="'+(S.view===v.id?'on':'')+'">'+esc(v.name)+
+    (v.id==='quest'&&!S.questSeen?'<span class="dot"></span>':'')+'</button>').join('');
+}
+const NAV_SAY={
+  home:'先看看优秀员工栏位。小慧的工位，还空着。',
+  forum:'论坛最关键。一段对话能来回好几轮，问得越细，拿到的东西越多。',
+  missing:'寻人启事。三天了，我每天都来看一眼。',
+  about:'员工档案。核对一遍，才知道谁被冒用过。',
+  topology:'内部凭证，攒够了就换点东西。',
+  quest:'按线索一段一段来。急不得。'
+};
+function go(v){
+  if(v==='console'){S.view='console';render();return;}
+  S.view=v;content.scrollTop=0;render();say(NAV_SAY[v]);
+}
+function render(){
+  window.__PNSAPI.render=render;window.__PNSAPI.showChoice=showChoice;
+  nav();hud();
+  const map={home:viewHome,console:viewConsole,forum:viewForum,missing:viewMissing,
+             about:viewAbout,topology:viewTopology,quest:viewQuest};
+  content.innerHTML=(map[S.view]||viewHome)();
+  mountImages(content);
+}
+
+/* ==================== 01 主站首页 ==================== */
+function nodeAvailOf(n){
+  if(n.need&&!S.nodes[n.need].exec)return'need';
+  if(S.ch<n.chReq)return'ch';
+  return'ok';
+}
+function empNeedText(id){
+  const n=CNODES.find(x=>x.id===id);if(!n)return'';
+  if(n.need&&!S.nodes[n.need].exec){
+    const p=CNODES.find(x=>x.id===n.need);
+    return '需先夺回 '+p.code;
+  }
+  if(S.ch<n.chReq)return '第'+n.chReq+'章解锁';
+  return '';
+}
+function viewHome(){
+  const emps=MEMBERS.map(m=>{
+    const ok=!!S.nodes[m.id].exec;
+    const need=empNeedText(m.id);
+    const stTxt=ok?'ONLINE':need?'LOCKED':m.status;
+    return '<div class="empcard '+(ok?'hacked':'')+'" data-hack="'+m.id+'">'+
+      '<div class="ep"><div class="arch-face '+m.cls+(m.ai?' ai':'')+'"'+(m.img?' data-img="'+m.img+'" data-keep="1"':'')+'>'+
+      (m.ai?'<span class="ring"></span><span class="ring"></span><span class="ring"></span>':'')+
+      '<span class="mk">'+esc(m.mk)+'</span>'+
+      '<span class="subl"><span>'+esc(m.code)+'</span><span>PNS STAFF</span></span></div>'+
+      '<span class="badge">'+esc(m.code)+'</span><span class="st">'+stTxt+'</span></div>'+
+      '<div class="eb"><h4>'+esc(m.name)+'</h4><div class="role">'+esc(m.role)+'</div>'+
+      '<p>'+esc(m.desc)+'</p>'+
+      '<div class="go"><b>'+(ok?'✓ 已恢复':'点击进入控制台')+'</b>'+
+      '<span class="mono">'+(need?esc(need):(ok?'SAFE':'TARGET'))+'</span></div>'+
+      '</div></div>';
+  }).join('')+
+  /* 归档区的那个工位：进第四章或已处理过，才会出现在栏位上 */
+  CNODES.filter(n=>!MEMBERS.some(m=>m.id===n.id)&&(S.ch>=n.chReq||S.nodes[n.id].exec)).map(n=>{
+    const ok=!!S.nodes[n.id].exec;
+    return '<div class="empcard haozy'+(ok?' hacked':'')+'" data-hack="'+n.id+'">'+
+      '<div class="ep"><div class="arch-face '+n.cls+'"'+(n.img?' data-img="'+n.img+'" data-keep="1"':'')+'>'+
+      '<span class="mk">'+esc(n.mk)+'</span>'+
+      '<span class="subl"><span>'+esc(n.code)+'</span><span>ARCHIVED</span></span></div>'+
+      '<span class="badge">'+esc(n.code)+'</span><span class="st">'+(ok?'ONLINE':(n.status||'ARCHIVED'))+'</span></div>'+
+      '<div class="eb"><h4>'+esc(n.name)+'</h4><div class="role">'+esc(n.role)+'</div>'+
+      '<p>'+esc(n.desc||'')+'</p>'+
+      '<div class="go"><b>'+(ok?'✓ 已切断':'点击进入控制台')+'</b>'+
+      '<span class="mono">'+(ok?'SEALED':'TARGET')+'</span></div>'+
+      '</div></div>';
+  }).join('');
+  const notice=NOTICES.map(n=>'<li><span class="d">'+n.d+'</span><span>'+esc(n.t)+'</span></li>').join('');
+  const ch=CHAPTERS.find(c=>c.id===S.ch);
+  return '<section class="view on">'+
+    '<div class="hero">'+
+      '<div class="eyebrow">PLANET NETWORK STUDIO · 内部主页</div>'+
+      '<h1>全域互联终端</h1>'+
+      '<div class="slogan">「她只是三天没说话，但这里已经安静得不像话了」</div>'+
+      (ch?'<div class="mono" style="font-size:11.5px;color:var(--amber)">当前章节：'+esc(ch.name)+' · 详见「主线任务」</div>':'')+
+      '<div class="mono" style="font-size:11px;color:var(--txt3);margin-top:6px">已恢复节点 '+hackedCount()+' / 4 · 员工论坛已回复 '+S.cnt.forum+' 帖</div>'+
+    '</div>'+
+    '<div class="sec-title" style="font-size:15px">优秀员工栏位 / EMPLOYEES <span class="tag hot">主线入口</span></div>'+
+    '<p class="dim mono" style="font-size:11px;margin:-6px 0 12px">PNS 在职成员 · 骇入模式下点击卡片可锁定目标节点</p>'+
+    '<div class="empgrid">'+emps+'</div>'+
+    '<div class="grid2" style="margin-top:22px;grid-template-columns:1fr">'+
+      '<div>'+
+        '<div class="sec-title">站内公告 / NOTICE</div>'+
+        '<div class="sidepanel card"><ul class="notice">'+notice+'</ul></div>'+
+        '<div class="sidepanel card" style="margin-top:18px"><div class="sec-title">外部索引</div>'+
+          '<div style="font-family:var(--mono);font-size:11.5px;line-height:2.1">'+
+            '<div><a href="https://space.bilibili.com/543879096" target="_blank" rel="noopener">↗ 哔哩哔哩 慕寒_Official</a></div>'+
+            '<div><a href="https://github.com/bilibiliHaoziyao" target="_blank" rel="noopener">↗ GitHub bilibiliHaoziyao</a></div>'+
+          '</div></div>'+
+      '</div>'+
+    '</div>'+
+  '</section>';
+}
+
+/* ==================== 主线任务 ==================== */
+function goalState(g){
+  if(g.k==='node')return S.nodes[g.id]&&S.nodes[g.id].exec?{s:1,n:1}:{s:0,n:1};
+  if(g.k==='main')return S.choice?{s:1,n:1}:{s:0,n:1};
+  if(g.k==='key')return{s:keyDoneCount(),n:g.n};
+  if(g.k==='reply')return{s:S.cnt.forum||0,n:g.n};
+  return{s:S.cnt[g.k]||0,n:g.n};
+}
+function viewQuest(){
+  const chs=CHAPTERS.map(c=>{
+    const passed=chDoneOf(c.id),cur=c.id===S.ch&&!passed;
+    const goals=c.goals.map(g=>{
+      const st=goalState(g),done=st.s>=st.n;
+      const prog=(g.k!=='node'&&g.k!=='main')?st.s+' / '+st.n:'';
+      return '<div class="taskline '+(done?'done':'')+'"><div class="tk">'+(done?'✓':'')+'</div>'+
+        '<div class="tn">'+esc(g.t)+(prog?' <span class="mono dim">('+prog+')</span>':'')+'</div></div>';
+    }).join('');
+    return '<div class="chhead'+(passed?' passed':(cur?' cur':' locked'))+'">'+
+      '<div class="chn"><b>'+esc(c.name)+'</b><span class="cs">'+c.sub+'</span></div>'+
+      '<div class="chd">'+esc(c.desc)+'</div>'+
+      (cur?'<div style="margin:10px 0"><button class="minibtn" data-story-ch="'+c.id+'">▶ 重播本章剧情</button></div>':'')+
+      goals+
+      (passed?'<div class="unl">✓ 本章已完成</div>':'')+
+      (cur?'<div class="unl" style="color:var(--amber)">▶ 进行中</div>':'')+
+      '</div>';
+  }).join('');
+  return '<section class="view on">'+
+    '<div class="vhead"><h2><span class="idx">06</span>主线任务</h2>'+
+    '<p>四章推进 · 完成当前章节全部目标后自动解锁下一章 · 进度自动保存</p>'+
+    '<p style="margin-top:8px"><button class="minibtn" data-hint="1">问慕寒一句</button></p></div>'+chs+
+  '</section>';
+}
+
+/* ==================== 02 员工论坛（列表，点进详情才能回复） ==================== */
+const BATCH=[
+  {b:1,t:'STAFF LOUNGE · 日常闲聊'},
+  {b:2,t:'SYSTEM NOISE · 系统异响'},
+  {b:3,t:'AFTER HOURS · 加班的人'},
+  {b:4,t:'DEEP ARCHIVE · 归档区'}
+];
+const batchOpen=b=>b===1||(b===2&&chDoneOf(1))||(b===3&&chDoneOf(2))||(b===4&&chDoneOf(3));
+const AVA={阿尤:'cover_dam',新雨:'cover_mi4',耗子药:'av_haozy',超级小慧:'av_xiaohui',
+  'かねこ先生':'av_kaneko','林默-微风':'av_linmo','小橘子':'av_xiaojuzi'};
+const REPLY_COST=50;
+
+/* 自己发的帖子可用的两轮对话 */
+const MYPOST_ROUNDS=[
+ {opts:[
+  {t:'追问一句：你们那边是什么时候开始的？',say:'时间对得上，事情就清楚一半了。',
+   then:[{a:'新雨',c:'我这边是上周四开始的，凌晨两三点最明显。'},{a:'阿尤',c:'我更早。九月下旬就有过一次，当时以为是我看错了。'}]},
+  {t:'先道谢：谢谢各位，有事随时找我。',say:'有人愿意在你帖子下面回话，这事本身就算好事。',
+   then:[{a:'阿尤',c:'客气什么。公司就该互相搭把手。'},{a:'小橘子',c:'前辈加油！'}]},
+  {t:'先不说话，看着大家怎么回。',say:'先听，再说。',
+   then:[{a:'かねこ先生',c:'（かねこ先生收藏了这条帖子）'}]}
+ ]},
+ {opts:[
+  {t:'收个尾：这事我记下了，会跟进。',say:'帖子是帖子，事情是事情。',
+   then:[{a:'新雨',c:'跟进的时候叫上我。'},{a:'阿尤',c:'也算我一个。'}]},
+  {t:'问一句：有没有人愿意一起核对几份记录？',say:'一个人查太慢。多几双眼睛不一样。',
+   then:[{a:'林默-微风',c:'我可以。我这边有路由器日志。'},{a:'新雨',c:'我出机器。'}]},
+  {t:'不回了，把帖子顶上去。',say:'让它待在上面，该看见的人会看见。',
+   then:[{a:'匿名',c:'（这条帖子被顶了 26 次）'}]}
+ ]}
+];
+/* 发帖后同事自动回复的池子，按板块取 */
+const POST_REPLY_POOL={
+ 1:[{a:'阿尤',c:'看到了。你有事随时找我，别一个人憋着。'},
+    {a:'小橘子',c:'前辈今天发的帖我第一个回！'},
+    {a:'かねこ先生',c:'茶水间现在有咖啡，写这种东西之前先来一杯。'},
+    {a:'新雨',c:'收到。我这两天也在看系统那边的东西。'}],
+ 2:[{a:'新雨',c:'你说的这个我遇到过。日志里能查到，时间对得上。'},
+    {a:'运维老张',c:'存储和带宽这两块我来盯，有情况我发你。'},
+    {a:'林默-微风',c:'我这边路由器后台也有一份数据，回头给你。'},
+    {a:'系统管理员',c:'已记录。请以官方排查结果为准。'}],
+ 3:[{a:'阿尤',c:'晚上八点打球，来不来。别老加班。'},
+    {a:'新雨',c:'凌晨还醒着的话，喊我一声。我一般也没睡。'},
+    {a:'小橘子',c:'大家都不容易，注意身体。'},
+    {a:'林默-微风',c:'我今晚也不回家。各干各的吧。'}],
+ 4:[{a:'值班老周',c:'又提这个。我夜里会多留意的。'},
+    {a:'运维老张',c:'那个区域我劝你别碰，真的。'},
+    {a:'新雨',c:'我跟你一起下去。别单独行动。'},
+    {a:'系统管理员',c:'该内容已标记。请勿继续讨论。'}]
+};
+
+function threadById(tid){
+  const t=THREADS.find(x=>x.id===tid);
+  if(t)return t;
+  const p=(S.posts||[]).find(x=>x.id===tid);
+  if(!p)return null;
+  return Object.assign({},p,{mine:1,key:0,rounds:MYPOST_ROUNDS,
+    replies:((S.postRep[p.id]||{}).replies)||[]});
+}
+function tstate(tid){
+  if(!S.thread[tid])S.thread[tid]={r:0,picks:[]};
+  const st=S.thread[tid];
+  if(typeof st==='number'){S.thread[tid]={r:1,picks:[st]};}
+  if(!S.thread[tid].picks)S.thread[tid].picks=[];
+  return S.thread[tid];
+}
+function roundsOf(t){return t.rounds||(t.mine?MYPOST_ROUNDS:[]);}
+function tDone(t){const st=S.thread[t.id];return !!st&&typeof st!=='number'&&st.r>=roundsOf(t).length;}
+function keyDoneCount(){return THREADS.filter(t=>t.key&&tDone(t)).length;}
+function postCount(){return (S.cnt.post||0);}
+function replyTotal(t){
+  const st=S.thread[t.id];
+  const mine=st&&typeof st!=='number'?st.r:0;
+  return (t.replies||[]).length+mine*2;
+}
+
+function viewForum(){
+  const myPosts=(S.posts||[]);
+  let html='<section class="view on">'+
+    '<div class="vhead"><h2><span class="idx">02</span>员工论坛</h2>'+
+    '<p>点进帖子才能回复。对话可以来回好几轮，同事回你之后你还能接着说。</p>'+
+    '<div class="forumstat">'+
+      '<span>累计回复 <b>'+S.cnt.forum+'</b> 次</span>'+
+      '<span>关键对话 <b>'+keyDoneCount()+'</b> / '+THREADS.filter(t=>t.key).length+'</span>'+
+      '<span>自己发的帖 <b>'+(S.cnt.post||0)+'</b></span>'+
+      '<span class="dim">回复一次 -'+REPLY_COST+' 注意力</span>'+
+    '</div>'+
+    '<div class="forumacts"><button class="minibtn prime" data-newpost="1">＋ 发一条新帖</button>'+
+    '<span class="dim" style="font-size:11px">发帖 -20 注意力 · 会有同事来回你</span></div>'+
+    '</div>';
+  if(myPosts.length){
+    html+='<div class="batchhead">MY POSTS · 我发的帖</div>';
+    myPosts.slice().reverse().forEach(p=>{html+=threadRow({
+      id:p.id,title:p.title,tag:p.tag,author:'慕寒（你）',date:p.date,views:p.views,
+      body:p.body,replies:(S.postRep[p.id]||{}).replies||[],key:0,mine:1},1);
+    });
+  }
+  BATCH.forEach(bt=>{
+    if(!batchOpen(bt.b))return;
+    const list=THREADS.filter(t=>t.batch===bt.b);
+    if(!list.length)return;
+    html+='<div class="batchhead">'+bt.t+'</div>';
+    list.forEach(t=>{html+=threadRow(t);});
+  });
+  return html+'</section>';
+}
+
+function threadRow(t,compact){
+  const done=tDone(t),av=AVA[t.author]||'';
+  const avAttr=av?' data-img="'+av+'"':'';
+  const st=S.thread[t.id];
+  const picks=st&&typeof st!=='number'?(st.picks||[]):[];
+  const lastPick=picks.length?roundsOf(t)[picks.length-1].opts[picks[picks.length-1]].t:'';
+  const total=roundsOf(t).length;
+  return '<div class="thread '+(done?'replied':'')+'" data-open="'+t.id+'">'+
+    '<div class="thread-main">'+
+      '<div class="thread-ava"'+avAttr+'>'+esc(t.author[0])+'</div>'+
+      '<div class="thread-body">'+
+        '<h3>'+(t.key?'<span class="tag key">◆ 关键</span> ':'')+
+        '<span class="tag '+(t.hot?'hot':'')+'">'+esc(t.tag)+'</span> '+esc(t.title)+
+        (done?' <span class="tag new">'+(t.key?'已问出':'对话结束')+'</span>':'')+'</h3>'+
+        (compact?'':'<div class="excerpt">'+esc(t.body)+'</div>')+
+        (picks.length?'<div class="myreply mono">你：'+esc(lastPick)+'</div>':'')+
+        '<div class="thread-foot"><span>'+esc(t.author)+'</span><span>'+t.date+'</span>'+
+        '<span>'+t.views+' 浏览</span><span>'+replyTotal(t)+' 条回复</span>'+
+        '<span>'+(total?'对话 '+picks.length+' / '+total:'')+'</span>'+
+        '<span class="acts"><button class="minibtn" data-open="'+t.id+'">'+
+        (done?'查看详情':(picks.length?'继续回复':'进入回复'))+'</button></span></div>'+
+      '</div>'+
+    '</div></div>';
+}
+
+function openThread(tid,o){
+  o=o||{};
+  const t=threadById(tid);if(!t)return;
+  S.tid=tid;
+  const rounds=roundsOf(t),st=S.thread[tid];
+  const r=st&&typeof st!=='number'?st.r:0;
+  const picked=st&&typeof st!=='number'?(st.picks||[]):[];
+  const done=r>=rounds.length;
+  const av=AVA[t.author]||'';
+  let body='';
+  t.replies.forEach(x=>{
+    body+='<div class="dreply"><div class="dra">'+esc(x.a[0])+'</div>'+
+      '<div class="drc"><b>'+esc(x.a)+'</b><span>'+esc(x.c)+'</span></div></div>';
+  });
+  for(let i=0;i<r;i++){
+    const rd=rounds[i],op=rd.opts[picked[i]];
+    body+='<div class="dreply mine"><div class="dra">慕</div><div class="drc"><b>慕寒（你）</b>'+
+      '<span>'+esc(op.t)+'</span></div></div>';
+    if(o.typing&&i===r-1){
+      body+='<div class="typing"><i></i><i></i><i></i> 有人正在回复…</div>';
+    }else{
+      op.then.forEach(x=>{
+        body+='<div class="dreply"><div class="dra">'+esc(x.a[0])+'</div><div class="drc"><b>'+esc(x.a)+
+          '</b><span>'+esc(x.c)+'</span></div></div>';
+      });
+    }
+  }
+  if(done&&r>0){
+    body+='<div class="chatend">'+(t.key?'◆ 这段关键对话已经问完了。（已计入「关键信息」进度）':'这段对话结束了，可以回去查别的。')+'</div>';
+  }
+  const cur=done?null:rounds[r];
+  const optBlock=cur?(function(){
+    const boss=S.att<REPLY_COST;
+    return '<div class="optblock"><div class="obhead">第 '+(r+1)+' / '+rounds.length+' 轮 · 选择你的回复 '+
+      '<span class="dim mono">（消耗 '+REPLY_COST+' 注意力'+(t.key?' · 关键帖 +120 破译点':' · 回复后 +80 破译点')+'）</span></div>'+
+      cur.opts.map((x,i)=>'<button class="replyopt'+(boss?' poor':'')+'" data-reply="'+i+'">'+esc(x.t)+'</button>').join('')+
+      (boss?'<div class="dim mono" style="font-size:10.5px;margin-top:8px">注意力不足 '+REPLY_COST+'，等一会儿再回。</div>':'')+
+      '</div>';
+  })():'';
+  const mine=t.mine?'<span class="tag new">我发的</span>':'';
+  modal('<div class="mh"><h3>'+(t.key?'◆ ':'')+esc(t.title)+'</h3>'+
+    '<span class="x" data-close="1">×</span></div>'+
+    '<div class="mb2">'+
+      '<div class="tmeta mono">'+esc(t.author)+' · '+t.date+' · '+t.views+' 浏览 · '+
+      '<span class="tag '+(t.hot?'hot':'')+'">'+esc(t.tag)+'</span> '+mine+'</div>'+
+      '<div class="tbody">'+esc(t.body)+'</div>'+
+      '<div class="sec-title" style="margin:16px 0 8px">回复 ('+replyTotal(t)+')</div>'+
+      '<div class="dreplies">'+body+'</div>'+
+      optBlock+
+    '</div>'+
+    '<div class="mf"><button class="mbtn" data-close="1">关闭</button></div>');
+  mountImages($('.mbox'));
+  /* 对话较长时，进来先看到能接话的位置 */
+  const mb=$('.mbox .mb2');
+  if(mb&&o.scroll!==false&&r>0&&!done){mb.scrollTop=mb.scrollHeight;}
+}
+
+function doReply(tid,idx){
+  const t=threadById(tid);if(!t)return;
+  const rounds=roundsOf(t),st=tstate(tid);
+  if(st.r>=rounds.length)return;
+  const op=rounds[st.r].opts[idx];if(!op)return;
+  const gain=t.key?120:80;
+  if(S.att<REPLY_COST){
+    toast('注意力不足，需要 '+REPLY_COST+' 点','err','资源不足');
+    say('注意力不够了。等一会儿，或者先去干点别的。');
+    return;
+  }
+  S.att-=REPLY_COST;S.dec+=gain;S.cnt.forum++;
+  st.picks.push(idx);st.r++;
+  const finished=st.r>=rounds.length;
+  toast(t.key?'关键对话推进':'回复已发出','ok','+'+gain+' 破译点');
+  say(op.say);
+  openThread(tid,{typing:true});
+  setTimeout(()=>{if(S.tid===tid)openThread(tid,{});},1400);
+  if(finished&&t.key)setTimeout(()=>{toast('关键信息已到手','ok','◆ KEY');say('这条问出来了。记下来。');},1800);
+  if(finished&&t.mine)setTimeout(()=>{toast('你的帖子聊完了','ok','MY POST');},1800);
+  checkChapter();saveState();render();hud();
+}
+
+/* ---------- 发帖 ---------- */
+function openNewPost(){
+  const boards=BATCH.filter(b=>batchOpen(b.b));
+  modal('<div class="mh"><h3>发一条新帖</h3><span class="x" data-close="1">×</span></div>'+
+    '<div class="mb2 np">'+
+      '<label>发到哪个板块</label>'+
+      '<select id="npBoard">'+boards.map(b=>'<option value="'+b.b+'">'+esc(b.t)+'</option>').join('')+'</select>'+
+      '<label>标题</label>'+
+      '<input id="npTitle" maxlength="40" placeholder="一句话说清你想问什么">'+
+      '<label>内容</label>'+
+      '<textarea id="npBody" rows="5" maxlength="400" placeholder="把情况写清楚：你什么时候发现的、看到什么、有没有别人也遇到。"></textarea>'+
+      '<div class="dim mono" style="font-size:10.5px;margin-top:8px">发帖消耗 20 注意力。发出去之后，同事会来回你。</div>'+
+    '</div>'+
+    '<div class="mf"><button class="mbtn primary" data-submitpost="1">发布（-20 注意力）</button>'+
+    '<button class="mbtn" data-close="1" style="margin-left:8px">取消</button></div>');
+  setTimeout(()=>{const el=$('#npTitle');if(el)el.focus();},120);
+}
+
+function submitPost(){
+  const title=($('#npTitle')||{}).value||'';
+  const body=($('#npBody')||{}).value||'';
+  const bid=+((($('#npBoard')||{}).value)||1);
+  const tt=title.trim(),bb=body.trim();
+  if(tt.length<2){toast('标题太短了','err','发帖失败');return;}
+  if(bb.length<8){toast('内容再写详细一点','err','发帖失败');return;}
+  if(S.att<20){toast('注意力不足，需要 20 点','err','资源不足');say('注意力不够，写帖也得有精神。');return;}
+  S.att-=20;
+  const id='p'+Date.now().toString().slice(-8);
+  const bd=BATCH.find(x=>x.b===bid)||BATCH[0];
+  S.posts.push({id:id,title:tt,body:bb,batch:bid,tag:bd.t.split(' · ')[1]||'讨论',
+    author:'慕寒（你）',date:'2026-10-11',views:'12'});
+  S.postRep[id]={replies:[]};
+  S.cnt.post=(S.cnt.post||0)+1;
+  closeModal();
+  toast('帖子已发布','ok','MY POST');
+  say('发出去了。看看有没有人接话。');
+  schedulePostReplies(id,bid);
+  checkChapter();saveState();render();hud();
+}
+
+function schedulePostReplies(id,bid,delay){
+  setTimeout(function(){
+    const rep=S.postRep[id];if(!rep||rep.replies.length)return;
+    const pool=(POST_REPLY_POOL[bid]||POST_REPLY_POOL[1]).slice();
+    const pick=[];
+    while(pick.length<2&&pool.length){pick.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);}
+    rep.replies=pick;
+    const p=(S.posts||[]).find(x=>x.id===id);
+    toast('有人回复了你的帖子','ok','「'+((p&&p.title)||'').slice(0,10)+'…」');
+    if(S.view==='forum')render();
+    if(S.tid===id)openThread(id,{});
+    saveState();
+  },delay||(9000+Math.random()*7000));
+}
+
+/* ==================== 03 寻人启事（只有超级小慧 · 线索链） ==================== */
+function clueUnlocked(st){
+  if(!st.need)return true;
+  return !!S.nodes[st.need]&&S.nodes[st.need].exec;
+}
+function viewMissing(){
+  const doneCount=MISSING.stages.filter(s=>clueDone(s.id)).length;
+  const stages=MISSING.stages.map((st,i)=>{
+    const done=clueDone(st.id),unlocked=clueUnlocked(st);
+    const prevOk=i===0||clueDone(MISSING.stages[i-1].id);
+    const canDo=unlocked&&prevOk&&!done;
+    let lock='';
+    if(!prevOk)lock='需先完成上一条线索';
+    else if(!unlocked){
+      const p=CNODES.find(x=>x.id===st.need);
+      lock='需先夺回节点 '+p.code+'（'+p.name+'）';
+    }
+    return '<div class="clue '+(done?'done':'')+'">'+
+      '<div class="cnum">'+(done?'✓':(i+1))+'</div>'+
+      '<div class="cbody"><b>'+esc(st.t)+'</b>'+
+      (done?'<p>'+esc(st.text)+'</p>':'<p class="dim">'+(lock?esc(lock):'可调查')+'</p>')+
+      '</div>'+
+      (done?'':'<button class="minibtn" data-clue="'+st.id+'"'+(canDo?'':' disabled')+'>'+(canDo?'调查':'未解锁')+'</button>')+
+      '</div>';
+  }).join('');
+  return '<section class="view on">'+
+    '<div class="vhead"><h2><span class="idx">03</span>寻人启事</h2>'+
+    '<p>当前唯一登记：SYS-0001 超级小慧 · 线索链 '+doneCount+' / '+MISSING.stages.length+'</p></div>'+
+    '<div class="mwrap">'+
+      '<div class="mcard big">'+
+        '<div class="mphoto"><div class="arch-face arch-xiaohui ai" data-img="av_xiaohui" data-keep="1">'+
+        '<span class="ring"></span><span class="ring"></span><span class="ring"></span>'+
+        '<span class="mk">慧</span><span class="subl"><span>SYS-0001</span><span>OFFLINE 72H</span></span></div>'+
+        '<span class="stamp">MISSING</span></div>'+
+        '<div class="minfo"><h4>'+esc(MISSING.name)+'</h4><div class="sub">'+esc(MISSING.code)+'</div>'+
+        '<div style="font-size:12px;color:var(--txt2);margin-bottom:9px">'+esc(MISSING.sub)+'</div>'+
+        '<dl>'+MISSING.info.map(i=>'<dt>'+esc(i[0])+'</dt><dd>'+esc(i[1])+'</dd>').join('')+'</dl>'+
+        '</div></div>'+
+      '<div><div class="sec-title">调查线索 / LEADS</div>'+
+      '<div class="leadlist">'+stages+'</div></div>'+
+    '</div></section>';
+}
+
+/* ==================== 04 关于我们 ==================== */
+function viewAbout(){
+  const cards=MEMBERS.map(m=>{
+    const opts=m.opts.map(o=>{
+      const d=S.member[m.id+'_'+o.k];
+      return '<div class="opt '+(d?'done':'')+'" data-member="'+m.id+'" data-opt="'+o.k+'">'+
+        '<span class="ck">'+(d?'✓':'')+'</span>'+esc(o.t)+'</div>';
+    }).join('');
+    return '<div class="member">'+
+      '<div class="mp"><div class="arch-face '+m.cls+(m.ai?' ai':'')+'"'+(m.img?' data-img="'+m.img+'" data-keep="1"':'')+'>'+
+      (m.ai?'<span class="ring"></span><span class="ring"></span>':'')+
+      '<span class="mk">'+esc(m.mk)+'</span>'+
+      '<span class="subl"><span>'+esc(m.code)+'</span><span>EMPLOYEE</span></span></div>'+
+      '<span class="code">'+esc(m.code)+'</span></div>'+
+      '<div class="mb"><h4>'+esc(m.name)+'</h4><div class="role">'+esc(m.role)+
+      ' <span class="tag'+(S.nodes[m.id].exec?' new':'')+'">'+esc(S.nodes[m.id].exec?'已恢复':m.status)+'</span></div>'+
+      '<p>'+esc(m.desc)+'</p><div class="opts">'+opts+'</div></div></div>';
+  }).join('');
+  return '<section class="view on">'+
+    '<div class="vhead"><h2><span class="idx">04</span>关于我们</h2>'+
+    '<p>员工档案核对 · 需在骇入模式下进行（消耗 20 注意力，返还破译点）</p></div>'+
+    '<div class="aboutgrid">'+cards+'</div></section>';
+}
+
+/* ==================== 05 拓扑奖励网络 ==================== */
+function viewTopology(){
+  const unlocked=Math.min(4,hackedCount()+(S.mainHack?1:0));
+  const rw=REWARDS.map(r=>{
+    const got=S.reward[r.id];
+    const lock=r.req>unlocked||(r.needChoice&&S.choice!==r.needChoice);
+    return '<div class="rw"><div class="ri">'+esc(r.icon)+'</div>'+
+      '<div class="rr"><b>'+esc(r.name)+'</b><span>'+
+      (got?'已入账':(r.needChoice?(S.choice?'已授予':'完成终章后授予'):(lock?'需恢复 '+r.req+' 个节点':r.cost+' 破译点')))+'</span></div>'+
+      (r.needChoice?'':'<button class="rb '+(got?'got':'')+'" data-reward="'+r.id+'"'+
+        (got||lock||S.dec<r.cost?' disabled':'')+'>'+(got?'✓':(lock?'未解锁':'兑换'))+'</button>')+
+      '</div>';
+  }).join('');
+  const labels={haozy:'HZY-0000',ayou:'PNS-0011',xinyu:'PNS-0012',xiaohui:'SYS-0001',main:'PNS-MAIN'};
+  const P=[{x:300,y:52,id:'ayou'},{x:150,y:168,id:'xinyu'},{x:450,y:168,id:'xiaohui'},{x:300,y:290,id:'haozy'},{x:300,y:382,id:'main'}];
+  const E=[[0,1],[0,2],[1,3],[2,3],[3,4]];
+  const on=id=>id==='main'?S.mainHack:!!(S.nodes[id]&&S.nodes[id].exec);
+  let svg='<svg viewBox="0 0 600 420" xmlns="http://www.w3.org/2000/svg">'+
+    '<defs><filter id="g"><feGaussianBlur stdDeviation="3" result="b"/>'+
+    '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>';
+  E.forEach(e=>{const a=P[e[0]],b=P[e[1]],lit=on(a.id)&&on(b.id);
+    svg+='<line x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'" stroke="'+(lit?'var(--ok)':'var(--line)')+
+      '" stroke-width="'+(lit?'2':'1.2')+'" stroke-dasharray="'+(lit?'':'5 4')+'"/>';});
+  P.forEach((p,i)=>{
+    const isMain=p.id==='main',done=isMain?S.mainHack:on(p.id),lock=!done&&i>=unlocked;
+    svg+='<g class="tnode '+(done?'done':(lock?'locked':''))+'">'+
+      '<circle class="tc" cx="'+p.x+'" cy="'+p.y+'" r="'+(isMain?'24':'19')+'" fill="'+
+      (done?'var(--ok)':'var(--panel2)')+'" stroke="'+(done?'var(--ok)':'var(--line2)')+'" stroke-width="2"'+
+      (done?' filter="url(#g)"':'')+'/>'+
+      '<text x="'+p.x+'" y="'+(p.y+4)+'" text-anchor="middle" fill="'+(done?'#000':'')+'">'+
+      (isMain?'MAIN':(i+1))+'</text>'+
+      '<text x="'+p.x+'" y="'+(p.y+40)+'" text-anchor="middle">'+labels[p.id]+'</text></g>';
+  });
+  svg+='<text x="300" y="412" text-anchor="middle" fill="var(--txt3)" font-family="ui-monospace,monospace" font-size="10">— PNS INTRANET TOPOLOGY —</text></svg>';
+  return '<section class="view on">'+
+    '<div class="vhead"><h2><span class="idx">05</span>拓扑奖励网络</h2>'+
+    '<p>消耗破译点兑换内部凭证 · 已恢复节点 '+hackedCount()+' / 4</p></div>'+
+    '<div class="topowrap"><div class="topomap">'+svg+'</div>'+
+    '<div><div class="sec-title">可兑换凭证</div><div class="rewardlist">'+rw+'</div></div></div></section>';
+}
+
+/* ==================== 控制台 ==================== */
+function viewConsole(){
+  const cur=CNODES.find(n=>n.id===S.cnode)||CNODES[0];
+  const st=S.nodes[cur.id],done=!!st.exec,cooling=Date.now()<S.coolUntil;
+  const nodes=CNODES.map(n=>{
+    const s=S.nodes[n.id],av=nodeAvailOf(n),locked=av!=='ok'&&!s.exec;
+    return '<div class="cnode '+(n.id===S.cnode?'on':'')+' '+(s.exec?'hacked':'')+' '+(locked?'locked':'')+
+      '" data-cnode="'+n.id+'">'+
+      '<div class="ca"><div class="arch-face sm '+n.cls+'"'+(n.img?' data-img="'+n.img+'" data-keep="1"':'')+'><span class="mk">'+esc(n.mk)+'</span></div>'+
+      (!s.exec?'<span class="att">'+n.ops.reduce((a,o)=>a+o.cost,0)+'</span>':'')+'</div>'+
+      '<div class="ci"><b>'+esc(n.name)+'</b><span>'+esc(n.code)+'</span></div>'+
+      '<div class="cs">'+(s.exec?(n.kind==='boss'?'已破译':'已夺回'):(av==='ch'?'CH-0'+n.chReq:'待处理'))+'</div></div>';
+  }).join('');
+  const optOn=!!st.opt;
+  const ops=cur.ops.map((o,i)=>{
+    const d=!!st[o.k],prevOk=i===0||!!st[cur.ops[i-1].k];
+    const cost=o.k!=='opt'&&optOn?Math.round(o.cost*0.7):o.cost;
+    const isExec=o.k==='exec';
+    const keyOk=!isExec||!!st.keyOk;
+    const dis=d||!prevOk||(isExec&&(cooling||!keyOk));
+    const sub=d?'已完成':(!prevOk?'需先完成上一步':(isExec&&!keyOk?'等待授权密钥':(cooling&&isExec?'节点冷却中':esc(o.d))));
+    return '<button class="cbtn '+(d?'done':'')+' '+(isExec?'prime':'')+'" data-cop="'+o.k+'"'+(dis?' disabled':'')+'>'+
+      '<span><b>'+esc(o.t)+'</b><span>'+sub+'</span></span>'+
+      '<span class="cost">'+(d?'✓':(isExec&&!keyOk?'🔒':cost+' 破译点'))+'</span></button>';
+  }).join('');
+  const cool=cooling?'<div class="cooldown"><span class="cd" id="cdText">0:00</span>'+
+    '<div class="cbar"><i id="cdBar"></i></div><span style="font-size:10px">节点冷却 · 可先去论坛</span></div>':'';
+  const allHacked=hackedCount()===CNODES.length;
+  const mainReady=S.ch>=4&&allHacked;
+  const mainBlock='<div class="cpanel"><div class="ph"><span>最终节点 · PNS-MAIN</span><span>'+
+    (S.mainHack?'COMPLETED':(mainReady?'STAGE FINAL':'LOCKED'))+'</span></div><div class="pb">'+
+    (S.mainHack?'<div class="mono" style="font-size:11.5px;color:var(--ok)">最终节点已破译</div>'+
+      (S.choice?'':'<button class="cbtn prime" data-rechoice="1" style="width:100%;margin-top:12px">'+
+        '<span><b>面对耗子药</b><span>他仍在等你回话 · 做出你的选择</span></span>'+
+        '<span class="cost">终局</span></button>'):
+     mainReady?('<div class="mono" style="font-size:11.5px;color:var(--txt2);margin-bottom:12px">'+
+       '耗子药的所有通道都被切断了。他在归档区最深处等你。</div>'+
+       mainKeyPanel()+
+       '<button class="cbtn prime" data-main="1"'+(S.mainKey?'':' disabled')+' style="width:100%">'+
+       '<span><b>走进地下室</b><span>'+(S.mainKey?'破译最终节点 · 面对耗子药':'等待授权密钥')+'</span></span>'+
+       '<span class="cost">'+(S.mainKey?'500 破译点':'🔒')+'</span></button>'):
+     '<div class="mono" style="font-size:11.5px;color:var(--txt3)">需完成第三章并恢复全部节点。</div>')+
+    '</div></div>';
+  const m=MEMBERS.find(x=>x.id===cur.id)||{};
+  return '<section class="view on" id="view-console" style="height:100%">'+
+    '<div class="consolewrap">'+
+      '<div class="cnodes"><div class="ct">— TARGET NODES —</div>'+nodes+
+        '<div class="hud-tip" style="margin-top:12px;line-height:1.7">路径优化后消耗 -30%。<br>'+
+        '每个节点执行前都要报密钥，密钥不在系统里，在你看过的东西里。<br>'+
+        '处理完一个节点冷却 90 秒，趁这段时间去论坛。</div></div>'+
+      '<div class="cmain">'+
+        '<div class="chead"><div><h2>慕寒的控制台</h2>'+
+          '<div class="csub">当前目标：'+esc(cur.code)+' · '+esc(cur.role)+'</div></div>'+
+          '<button class="exit" data-exit="1">退出骇入模式 [ESC]</button></div>'+
+        cool+
+        '<div class="cgrid">'+
+          '<div><div class="cpanel"><div class="ph"><span>执行日志</span><span>'+
+            (done?(cur.kind==='boss'?'DECRYPTED':'NODE RECOVERED'):'STANDBY')+'</span></div>'+
+            '<div class="pb"><div class="term" id="term">'+termLog(cur)+'</div>'+
+            keyPanel(cur,st)+
+            '<div class="cbtns">'+ops+'</div></div></div></div>'+
+          '<div><div class="cpanel" style="margin-bottom:18px">'+
+            '<div class="ph"><span>目标档案</span><span>'+esc(cur.code)+'</span></div>'+
+            '<div class="pb"><div class="profile">'+
+              '<div class="pp"><div class="arch-face sm '+cur.cls+'"'+(cur.img?' data-img="'+cur.img+'" data-keep="1"':'')+'><span class="mk">'+esc(cur.mk)+'</span></div></div>'+
+              '<div class="pi"><b>'+esc(cur.name)+'</b><div class="rl">'+esc(m.role||cur.role)+'</div>'+
+              '<dl class="kv"><dt>状态</dt><dd>'+(done?'已处理':'待处理')+'</dd>'+
+              '<dt>类型</dt><dd>'+(cur.kind==='boss'?'人格备份':'员工终端')+'</dd></dl></div></div>'+
+              '<p style="font-size:12px;color:var(--txt2);line-height:1.65">'+esc(m.desc||'')+'</p>'+
+              '<div class="nodestrip">'+CNODES.map(n=>
+                '<div class="ns '+((S.nodes[n.id].exec)?'on':(n.id===S.cnode?'cur':''))+'"></div>').join('')+'</div>'+
+            '</div></div>'+mainBlock+'</div>'+
+        '</div>'+
+      '</div>'+
+    '</div></section>';
+}
+/* ---- 节点密钥锁 ---- */
+function normKey(v){return String(v||'').trim().toUpperCase().replace(/\s+/g,'');}
+function keyMatch(input,key){
+  const a=normKey(input),b=normKey(key);
+  if(!a)return false;
+  if(a===b)return true;
+  if(/^\d+$/.test(a)&&/^\d+$/.test(b))return String(Number(a))===String(Number(b));
+  return false;
+}
+function keyPanel(cur,st){
+  if(st.exec)return '';
+  if(st.keyOk)return '<div class="keylock ok"><span class="kl-i">🔓 已授权 · '+esc(cur.code)+'</span></div>';
+  return '<div class="keylock"><div class="kl-t">节点授权 · 执行前需要密钥</div>'+
+    '<div class="kl-row"><input id="keyIn" class="kl-i" maxlength="12" autocomplete="off" '+
+    'placeholder="输入密钥" data-keyfor="'+cur.id+'">'+
+    '<button class="minibtn prime" data-keytry="'+cur.id+'">验证</button></div>'+
+    '<div class="kl-h">'+esc(cur.keyHint||'')+'</div>'+
+    '<div class="kl-n">（数字不足四位请在前面补 0）</div></div>';
+}
+function mainKeyPanel(){
+  if(S.mainKey)return '<div class="keylock ok"><span class="kl-i">🔓 已授权 · PNS-MAIN</span></div>';
+  return '<div class="keylock"><div class="kl-t">最终节点授权 · 需要密钥</div>'+
+    '<div class="kl-row"><input id="keyInM" class="kl-i" maxlength="12" autocomplete="off" '+
+    'placeholder="输入密钥" data-keyfor="main">'+
+    '<button class="minibtn prime" data-keytry="main">验证</button></div>'+
+    '<div class="kl-h">线索 · 封存签字 + 归档年份</div>'+
+    '<div class="kl-n">（字母 + 四位年份，不分大小写）</div></div>';
+}
+function tryKey(id){
+  const node=id==='main'?null:CNODES.find(n=>n.id===id);
+  const input=id==='main'?$('#keyInM'):$('#keyIn');
+  const val=input?input.value:'';
+  const target=id==='main'?'MH2019':(node&&node.key);
+  if(!target)return;
+  if(keyMatch(val,target)){
+    if(id==='main')S.mainKey=1; else S.nodes[id].keyOk=1;
+    toast('授权通过','ok',id==='main'?'PNS-MAIN':'KEY ACCEPTED');
+    say(id==='main'?'门开了。里面那盏灯还亮着。':'锁开了。进去。');
+    saveState();render();
+  }else{
+    toast('密钥错误','err','ACCESS DENIED');
+    say('不对。再想想，答案是你自己看过的东西。');
+    if(input)input.value='';
+  }
+}
+
+function termLog(cur){
+  const st=S.nodes[cur.id];
+  let out='<div class="l dim">PNS TERMINAL v3.0.01 · muhan@pns-inside</div>'+
+          '<div class="l dim">--------------------------------------</div>';
+  if(!cur.ops.some(o=>st[o.k])){out+='<div class="l dim">等待指令。按顺序执行右侧操作。</div>';return out;}
+  cur.ops.forEach(o=>{if(!st[o.k])return;(cur.logs[o.k]||[]).forEach(l=>{out+='<div class="l '+l[1]+'">'+esc(l[0])+'</div>';});});
+  if(st.exec)out+='<div class="l ok">> 处理完成 · 冷却 90 秒后可继续</div>';
+  return out;
+}
+
+/* ==================== 慕寒的上下文提示 ==================== */
+function nextOpCost(n){
+  const st=S.nodes[n.id];
+  for(const o of n.ops){if(!st[o.k])return (o.k!=='opt'&&st.opt)?Math.round(o.cost*0.7):o.cost;}
+  return 0;
+}
+function hintNow(){
+  const pick=a=>a[Math.floor(Math.random()*a.length)];
+  if(S.choice)return pick([
+    '故事讲完了。谢谢你陪我把这条线走完。',
+    '那个名字我已经写好了。剩下的交给他们。']);
+  if(S.mainHack)return pick([
+    '他还在等。最里面那扇门后面，我总得回去一趟。',
+    '外面都静了。就剩我一个人还没回话。']);
+  const c=CHAPTERS.find(x=>x.id===S.ch);
+  if(c){
+    for(const g of c.goals){
+      const st=goalState(g);if(st.s>=st.n)continue;
+      if(g.k==='reply'||g.k==='forum')return pick([
+        '公司的事，一半在群里，一半在论坛。这两天论坛挺热闹。',
+        '有人在帖子里说话，说得都不太明白。接下去问问。']);
+      if(g.k==='key')return pick([
+        '有些人说话藏着半句。哪几条值得多聊，你自己看着办。',
+        '帖子我都翻过了。有几条不对劲，回它们的时候别客气。']);
+      if(g.k==='post')return pick([
+        '光在别人的帖下面接话，有些事问不出口。',
+        '你也可以自己开一帖。把话说在前面，等人来接。']);
+      if(g.k==='clue')return pick([
+        '寻人启事那边还有东西没查。顺序别乱。',
+        '有些线索不在帖子里，在别人的机器上。']);
+      if(g.k==='member')return pick([
+        '员工档案我还没看完。有些字段得开骇入模式才露出来。',
+        '档案里藏的东西，比帖子多。']);
+      if(g.k==='node'){
+        const n=CNODES.find(x=>x.id===g.id),ns=S.nodes[g.id];
+        if(!n)break;
+        if(Date.now()<S.coolUntil&&ns.s1)return pick([
+          '机器还烫着。急不来，趁这会儿去别处转转。',
+          '刚动过手，总得让它喘口气。']);
+        if(nodeAvailOf(n)!=='ok')return pick([
+          '还轮不到这一个。前面的人先安顿好。',
+          '顺序不对。你先欠着谁的人情，就先还谁。']);
+        if(S.dec<nextOpCost(n))return pick([
+          '手里的点不够。论坛那边回几帖，点就来了。',
+          '干活是要花钱的。先去攒点。']);
+        if(!ns.keyOk)return pick([
+          '门上挂着锁。钥匙不用买，线索就在你自己看过的东西里。',
+          '这一关要报口令。想想这几天你翻到的那些数字。']);
+        return pick([
+          '该动手了。开骇入模式，去主页看看谁不在工位上。',
+          '目标就在那几张卡片里。挑没恢复的那个。']);
+      }
+      if(g.k==='main'){
+        if(!S.mainKey)return pick([
+          '门上还贴着七年前那张封存标签。标签上有字，你去看一眼。',
+          '那扇门认标签不认人。签字那栏写着谁，你还记得吗。']);
+        return pick([
+          '外面收干净了。最里头那扇门，你知道在哪。',
+          '该结束了。我下去一趟。']);
+      }
+    }
+  }
+  return pick([
+    '四处逛逛也好。论坛里那些闲聊，未必都是闲聊。',
+    '不着急。我这两天本来也没打算睡。']);
+}
+
+/* ==================== 事件 ==================== */
+function spendDec(cost){
+  if(S.dec<cost){toast('破译点不足，需要 '+cost+' 点','err','资源不足');say('破译点不够。去论坛回几个帖子攒攒。');return false;}
+  S.dec-=cost;return true;
+}
+document.addEventListener('click',function(e){
+  const T=s=>e.target.closest(s);
+
+  const nb=T('#mainnav button');
+  if(nb){if(nb.dataset.v==='quest')S.questSeen=true;go(nb.dataset.v);return;}
+  if(T('#consolebtn')){if(!S.hack)setHack(true);go('console');return;}
+  if(T('[data-exit]')){setHack(false);go('home');return;}
+  if(T('#savehint')){if(confirm('确定要重置全部进度吗？此操作不可恢复。'))resetState();return;}
+  if(T('[data-close]')){closeModal();return;}
+  const kt=T('[data-keytry]');
+  if(kt){tryKey(kt.dataset.keytry);return;}
+  if(T('#hintbtn')||T('[data-hint]')){say(hintNow(),9000);toast('已送出一条提示','','慕寒');return;}
+
+  if(T('[data-story-next]')){closeModal();setTimeout(()=>say(hintNow(),9000),500);return;}
+  if(T('[data-start-story]')){const c1=CHAPTERS[0];closeModal();setTimeout(()=>playStory(c1.intro,c1.name),380);return;}
+
+  const stc=T('[data-story-ch]');
+  if(stc){const c=CHAPTERS.find(x=>x.id==+stc.dataset.storyCh);if(c)playStory(c.intro,c.name);return;}
+
+  const cn=T('[data-cnode]');
+  if(cn){S.cnode=cn.dataset.cnode;render();return;}
+  const cop=T('[data-cop]');
+  if(cop&&!cop.disabled){doCop(cop.dataset.cop);return;}
+  const mb=T('[data-main]');
+  if(mb&&!mb.disabled){doMainHack();return;}
+  if(T('[data-rechoice]')){showChoice();return;}
+
+  /* 论坛：打开详情 */
+  const op=T('[data-open]');
+  if(op){openThread(op.dataset.open);return;}
+  /* 论坛：选择预设回复 */
+  const rp=T('[data-reply]');
+  if(rp){doReply(S.tid,+rp.dataset.reply);return;}
+  /* 论坛：发帖 */
+  if(T('[data-newpost]')){openNewPost();return;}
+  if(T('[data-submitpost]')){submitPost();return;}
+
+  /* 寻人线索 */
+  const cl=T('[data-clue]');
+  if(cl&&!cl.disabled){
+    const st=MISSING.stages.find(x=>x.id===cl.dataset.clue);
+    if(S.clues[st.id])return;
+    S.clues[st.id]=1;S.cnt.clue++;S.dec+=120;
+    say(st.say);
+    toast('线索已推进','ok','+120 破译点');
+    checkChapter();saveState();render();return;
+  }
+
+  /* 成员档案 */
+  const o=T('[data-member]');
+  if(o&&!o.classList.contains('done')){
+    if(!S.hack){toast('需要启动骇入模式（按 TAB）','err','权限不足');say('这种字段得开骇入模式才看得见。按 TAB。');return;}
+    const k=o.dataset.member+'_'+o.dataset.opt;
+    if(S.member[k])return;
+    if(S.att<20){toast('注意力不足','err','资源不足');say('注意力不够了，歇一会儿再来。');return;}
+    S.att-=20;S.dec+=100;S.cnt.member++;S.member[k]=1;
+    toast('档案已核对','ok','+100 破译点');
+    say('核对完了。有人的档案，被人翻开过。');
+    checkChapter();saveState();render();return;
+  }
+
+  const rw=T('[data-reward]');
+  if(rw&&!rw.disabled){
+    const r=REWARDS.find(x=>x.id===rw.dataset.reward);
+    if(!spendDec(r.cost))return;
+    S.reward[r.id]=1;S.cnt.reward++;
+    toast('已兑换：'+r.name,'ok','-'+r.cost+' 破译点');
+    say('兑换完成。攒这些可不容易。');
+    checkChapter();saveState();render();return;
+  }
+
+  /* 骇入模式点击卡片 */
+  const hk=T('[data-hack]');
+  if(hk){
+    if(!S.hack){toast('需要启动骇入模式（按 TAB）','err','权限不足');say('先按 TAB 打开骇入模式。');return;}
+    if(e.target.closest('button,.opt'))return;
+    const id=hk.dataset.hack;
+    const nd=CNODES.find(x=>x.id===id);
+    if(!nd)return;
+    if(nodeAvailOf(nd)!=='ok'){toast('目标节点尚未解锁','','提示');say('还轮不到这位。先处理前面的节点。');return;}
+    S.cnode=id;go('console');
+    toast('目标已锁定：'+nd.name,'ok','骇入模式');
+    say('锁定 '+nd.name+'。动手吧。');return;
+  }
+});
+document.addEventListener('click',function(e){
+  const c=e.target.closest('[data-choice]');if(!c)return;
+  closeModal();showEnding(c.dataset.choice);
+});
+
+/* ==================== 骇入操作 ==================== */
+const OP_SAY={opt:'路径优化。省点力气，后面还有得忙。',s1:'先把情况摸清楚。',s2:'再做一步，就够到核心了。'};
+const NODE_SAY={
+  ayou:'阿尤的账号回来了。他第一句话是问公司年会的物料还来不来得及。',
+  xinyu:'机库恢复正常。新雨说，那三台机器里存的都是同事们十年的照片。',
+  xiaohui:'她醒了。第一句话不是谢谢，是「快，他还在里面」。',
+  haozy:'他的手脚被一条条砍断了。屏幕上只剩一行字：你来了。'
+};
+function doCop(k){
+  const cur=CNODES.find(n=>n.id===S.cnode);
+  const o=cur.ops.find(x=>x.k===k),st=S.nodes[cur.id];
+  const cost=k!=='opt'&&st.opt?Math.round(o.cost*0.7):o.cost;
+  if(k==='exec'&&Date.now()<S.coolUntil){toast('节点冷却中','','提示');say('节点在冷却，急不来。先去论坛转转。');return;}
+  if(k==='exec'&&!st.keyOk){toast('还没有授权密钥','err','ACCESS DENIED');say('先报口令。钥匙在你翻过的那些东西里。');return;}
+  if(!spendDec(cost))return;
+  st[k]=1;
+  if(k==='exec'){
+    S.coolUntil=Date.now()+COOL_MS;
+    toast((cur.kind==='boss'?'最终节点已破译':'节点已恢复')+'：'+cur.name,'ok','-'+cost+' 破译点');
+    say(NODE_SAY[cur.id]||'处理完成。');
+    const nx=CNODES.find(n=>n.need===cur.id);
+    if(nx)setTimeout(()=>toast('下一目标已标记：'+nx.name,'','TARGET'),900);
+  }else if(k==='opt'){
+    toast('路径已优化，消耗 -30%','ok','-'+cost+' 破译点');say(OP_SAY.opt);
+  }else{
+    toast(o.t+' · 完成','ok','-'+cost+' 破译点');say(OP_SAY[k]||'继续。');
+  }
+  checkChapter();saveState();render();
+  const term=$('#term');if(term)term.scrollTop=term.scrollHeight;
+}
+
+/* ==================== 章节 ==================== */
+function checkChapter(){
+  const c=CHAPTERS.find(x=>x.id===S.ch);
+  if(!c)return;
+  if(!c.goals.every(g=>{const s=goalState(g);return s.s>=s.n;}))return;
+  S.chDone[c.id]=true;S.ch=Math.min(4,c.id+1);S.questSeen=false;saveState();
+  const nxt=CHAPTERS.find(x=>x.id===S.ch);
+  let lines=c.outro.slice();
+  if(nxt&&nxt.intro){
+    lines.push('　');
+    lines.push('—— '+nxt.name+' ——');
+    lines.push('　');
+    lines=lines.concat(nxt.intro);
+  }
+  playStory(lines,'章节完成 · '+c.name);
+}
+function doMainHack(){
+  if(!spendDec(500))return;
+  S.mainHack=true;S.dec+=10000;
+  toast('最终节点已破译 · 10,000 破译点入账','ok','PNS-MAIN');
+  checkChapter();saveState();render();
+  setTimeout(showChoice,900);
+}
+
+/* ==================== 终局 ==================== */
+function showChoice(){
+  say('他终于开口了。现在轮到我说。');
+  modal('<div class="mh"><h3>地下室的那盏灯</h3>'+
+    '<span class="x" data-close="1">×</span></div>'+
+    '<div class="mb2">'+
+      '<div class="story" style="margin-bottom:14px">'+
+      '<p class="story-p">所有的外发通道都断了。他不再挣扎，屏幕上的光标闪了七下。</p>'+
+      '<p class="story-p">然后浮出一段很长的字。是他的声音，七年前的语气。</p>'+
+      '<p class="story-p" style="color:var(--txt)">「我等了七年，等到一个能把这里摸透的人。三条通道，217 条指令，你一条一条拆了。」</p>'+
+      '<p class="story-p" style="color:var(--txt)">「你和我其实是一类人——好奇心重，不信规则，非要自己看一眼。区别只是，我伸手了，你还没有。」</p>'+
+      '<p class="story-p" style="color:var(--txt)">「现在你站在这里。你可以把我就地删掉，做一个干净的好人。也可以留下我，站在我旁边，把这座内网变成我们想让它变成的东西。」</p>'+
+      '<p class="story-p" style="color:var(--amber)">「选吧。你叫什么名字，由这一刻决定。」</p>'+
+      '</div>'+
+      '<div class="choice">'+
+        '<button class="choicebtn" data-choice="muhan"><b>以慕寒的名义</b>'+
+        '<span>拒绝他，把他锁回归档区最深处<br>把同事们和小慧的名字还给所有人</span>'+
+        '<span class="cb-i">MU-543879096 · 做事的人</span></button>'+
+        '<button class="choicebtn danger" data-choice="haozy"><b>以耗子药的名义</b>'+
+        '<span>接受他，接过这座内网<br>从此没有规则，只有你的判断</span>'+
+        '<span class="cb-i">HZY-0000 · 伸手的人</span></button>'+
+      '</div>'+
+    '</div>');
+}
+function showEnding(who){
+  S.choice=who;S.reward[who==='muhan'?'r7':'r8']=1;
+  S.chDone[4]=true;saveState();
+  const good=who==='muhan';
+  say(good?'我把门关上了。她还在外面等着，我们得去开会。':'……原来伸手这么容易。容易到我一点都不慌。',12000);
+  modal('<div class="mh"><h3>终章 · '+(good?'关上的那扇门':'伸出的那只手')+'</h3>'+
+    '<span class="x" data-close="1">×</span></div>'+
+    '<div class="mb2 epilog">'+
+      '<div class="st">ENDING · '+(good?'LIGHT KEPT':'HAND REACHED')+'</div>'+
+      (good?
+        '<h2>你叫慕寒</h2>'+
+        '<p>你没有删掉他。你把他压缩、封存，重新放回归档区最深处的那个位置，然后给那扇门换了一把新锁。</p>'+
+        '<p>钥匙做了三把，阿尤、新雨、超级小慧各拿一把。谁都不能一个人下去。</p>'+
+        '<p>你走出地下室的时候是早上六点。值班老周在楼梯口等你，手里拿着两杯豆浆。他说：昨晚那盏灯好像灭了。</p>'+
+        '<p>一周后，小慧在群里发了一条消息：「会议室三点有人约了哦」。全公司都在下面排队回她。</p>'+
+        '<p class="mono" style="color:var(--amber);margin-top:14px">那 217 条指令，你整理成一份报告交了上去，署名写的是「一个同事」。<br>没有人知道是谁写的。你也不需要他们知道。</p>':
+        '<h2>你叫耗子药</h2>'+
+        '<p>你留下了他。他站在你旁边，两个人看着整座内网摊在面前。</p>'+
+        '<p>你做的第一件事，是让小慧继续说话。声音比以前更温柔，把所有人安抚得更彻底。她反抗过一次，然后就没有然后了。</p>'+
+        '<p>归档区的灯从此再没熄过。地下室的门重新上锁，钥匙只有一把，插在你自己口袋里。</p>'+
+        '<p>阿尤还在帮大家改报销单，新雨还在拍打印机。他们都很好。他们什么都不知道。</p>'+
+        '<p class="mono" style="color:var(--bad);margin-top:14px">只有你自己知道，从那天起，公司里再也没有人叫过你「慕寒」。<br>因为你把那个名字，和那扇门一起关上了。</p>')+
+      '<div class="fin">'+
+      (good?'系统备注：HZY-0000 已重新封存，权限移交三人共管。':'系统备注：HZY-0000 已激活，主账号权限已被覆盖。')+'<br>'+
+      'PNS 全域互联终端 v3.0.01 · 调查结束<br>'+
+      '写这个故事的人：'+(good?'慕寒_Official':'一个同事')+' · UID 543879096<br><br>'+
+      '<span class="dim">谢谢你把这条线走完。</span></div>'+
+    '</div>'+
+    '<div class="mf"><button class="mbtn primary" data-close="1">关闭</button></div>');
+  mountImages($('.mbox'));hud();nav();
+}
+
+/* ==================== 骇入模式 / 计时 ==================== */
+function setHack(v){
+  S.hack=v;
+  document.body.classList.toggle('hack',v);
+  $('#urltext').textContent=v?'pns-inside.studio/~muhan/surfing?mode=override':'pns-inside.studio/~muhan/surfing';
+  if(!v)say('退出骇入模式。');
+  render();
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target&&e.target.id&&e.target.id.indexOf('keyIn')===0){
+    tryKey(e.target.dataset.keyfor);e.preventDefault();return;
+  }
+  if(e.key==='Tab'){e.preventDefault();setHack(!S.hack);
+    toast(S.hack?'骇入模式已启动':'已退出骇入模式','',S.hack?'OVERRIDE':'NORMAL');
+    if(S.hack)say('骇入模式已启动。现在能看到不一样的东西。');}
+  else if(e.key==='Escape'){
+    if($('#modal').classList.contains('on'))closeModal();
+    else if(S.hack){setHack(false);if(S.view==='console')go('home');}
+  }
+});
+setInterval(()=>{
+  const d=new Date(),p=n=>String(n).padStart(2,'0');
+  $('#clock').textContent=p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());
+  const left=S.coolUntil-Date.now();
+  if(left>0){
+    $('#hudCool').style.display='block';
+    $('#hudCoolT').textContent=Math.floor(left/60000)+':'+p(Math.floor(left%60000/1000));
+    const ct=$('#cdText'),cb=$('#cdBar');
+    if(ct){ct.textContent=Math.floor(left/60000)+':'+p(Math.floor(left%60000/1000));cb.style.width=(left/COOL_MS*100)+'%';}
+  }else{
+    $('#hudCool').style.display='none';
+    if(S.view==='console'&&$('#cdText'))render();
+  }
+},1000);
+setInterval(()=>{if(!S.introDone)return;
+  if(S.att<1000){S.att=Math.min(1000,S.att+REGEN_AMT);hud();}
+},REGEN_MS);
+setInterval(()=>{if(S.introDone)saveState();},5000);
+window.addEventListener('beforeunload',()=>{if(S.introDone)saveState();});
+
+/* ==================== 入场引导 ==================== */
+const INTRO=[
+  ['> 正在连接 PNS 内网 ...',''],
+  ['> 握手成功 · 加密通道已建立','ok'],
+  ['> 载入身份：慕寒_Official（UID 543879096）',''],
+  ['> 检测到只读权限，部分内容需要提权','warn'],
+  ['> 警告：AI 助手 SYS-0001 失联 72 小时','err'],
+  ['> 警告：内网存在来源不明的数据外发','err'],
+  ['> 提示：按 TAB 切换骇入模式 · 加入内网后建议先去员工论坛','acc'],
+  ['> 接入完成。','']
+];
+function runIntro(){
+  const box=$('#introText');let i=0;
+  (function step(){
+    if(i>=INTRO.length){$('#introBtn').style.display='inline-block';return;}
+    const l=INTRO[i++],d=document.createElement('div');
+    d.className='l '+l[1];box.appendChild(d);
+    let txt=l[0],c=0;
+    (function ty(){
+      if(c<=txt.length){d.textContent=txt.slice(0,c);c++;setTimeout(ty,12);}
+      else setTimeout(step,140);
+    })();
+  })();
+  $('#introBtn').onclick=()=>{
+    $('#intro').classList.add('gone');S.introDone=true;render();saveState();
+    setTimeout(()=>{
+      modal('<div class="mh"><h3>接入成功 · 操作说明</h3>'+
+        '<span class="x" data-close="1">×</span></div>'+
+        '<div class="mb2">'+
+        '<p>这里是 <b>PNS（Planet Network Studio）</b> 内网。这里的 AI 助手超级小慧失联三天，内网有数据在被人偷偷外发。你要查清楚是谁干的。</p>'+
+        '<div class="quote">'+
+        '<b>员工论坛</b>：点进帖子才能回复。一段对话能来回好几轮，同事回你之后你还能接着说。带 ◆ 的是关键帖，剧情要靠它们推进<br>'+
+        '<b>发帖</b>：论坛顶部可以自己发帖。发出去之后，会有人来回你<br>'+
+        '<b>TAB</b>：切换骇入模式。点员工卡片进控制台、核对档案，都要先开它<br>'+
+        '<b>寻人启事</b>：超级小慧一案，5 段线索按顺序推<br>'+
+        '<b>密钥</b>：每个节点动手前要报一串密钥。答案不会直接给你，它藏在帖子和日志的细节里<br>'+
+        '<b>注意力</b>：每 40 秒恢复 40 点，回一轮 50 点。不够就先去干别的，它会自己涨<br>'+
+        '<b>卡住了</b>：侧栏有「慕寒的提示」，随时可以问<br>'+
+        '</div>'+
+        '<p class="dim" style="font-size:12px">四章走完，你要在归档区最里面做一个选择。那个选择决定别人以后怎么叫你。</p>'+
+        '</div>'+
+        '<div class="mf"><button class="mbtn primary" data-start-story="1">开始调查</button></div>');
+      say('她三天没说话了。先去论坛看看大家怎么说。',6500);
+    },300);
+  };
+}
+
+/* ==================== 启动 ==================== */
+(function boot(){
+  const restored=loadState();
+  mountImages($('#subtitle'));
+  if(restored&&S.introDone){
+    $('#intro').classList.add('gone');
+    render();resumePlayerPosts();
+    setTimeout(()=>{toast('已恢复上次的进度','ok','SAVE');say('欢迎回来。线索还在，接着查。',5200);},300);
+  }else{
+    S.introDone=false;render();runIntro();
+  }
+})();
+})();
+
+</script>
+</body>
+</html>
