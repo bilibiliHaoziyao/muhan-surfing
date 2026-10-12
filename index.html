@@ -179,10 +179,7 @@ body.hack .brand .mk{box-shadow:0 0 16px var(--amber)}
   padding:16px 16px 14px;border-bottom:1px solid var(--line);
   display:flex;align-items:center;gap:11px;
 }
-.hud-user img{
-  width:44px;height:44px;border-radius:50%;object-fit:cover;
-  border:2px solid var(--amber);background:var(--panel2);flex:none;
-}
+.hud-user .un{padding-left:9px;border-left:2px solid var(--amber)}
 .hud-user .un b{display:block;font-size:13px}
 .hud-user .un span{display:block;font-family:var(--mono);font-size:9.5px;color:var(--txt3)}
 .hud-sec{padding:13px 16px;border-bottom:1px solid var(--line)}
@@ -783,17 +780,11 @@ body.hack .mbox{box-shadow:0 0 60px var(--amber-soft)}
   width:min(720px,calc(100vw - 44px));z-index:8500;
   display:flex;gap:12px;align-items:flex-start;
   background:rgba(8,10,13,.94);border:1px solid var(--line2);border-left:3px solid var(--amber);
-  padding:11px 15px;opacity:0;pointer-events:none;transition:opacity .28s,transform .28s;
+  padding:11px 17px;opacity:0;pointer-events:none;transition:opacity .28s,transform .28s;
   box-shadow:0 10px 34px rgba(0,0,0,.65);
 }
 body.hack #subtitle{border-left-color:var(--amber);box-shadow:0 0 26px var(--amber-soft),0 10px 34px rgba(0,0,0,.6)}
 #subtitle.on{opacity:1;transform:translateX(-50%) translateY(0)}
-#subtitle .sav{
-  width:36px;height:36px;flex:none;border-radius:50%;overflow:hidden;
-  border:1.5px solid var(--amber);background:var(--panel2);display:grid;place-items:center;
-}
-#subtitle .sav img{width:100%;height:100%;object-fit:cover}
-#subtitle .sav .ph{font-family:var(--mono);font-size:14px;color:var(--amber)}
 #subtitle .stx{flex:1;min-width:0}
 #subtitle .stx b{
   display:block;font-family:var(--mono);font-size:9.5px;color:var(--amber);
@@ -1035,7 +1026,6 @@ body.hack .arch-face{
   .savehint{display:none}
   /* 字幕贴底，全宽 */
   #subtitle{bottom:10px;width:calc(100vw - 16px);padding:8px 10px;gap:8px}
-  #subtitle .sav{width:26px;height:26px}
   #subtitle .stx b{font-size:8px;margin-bottom:1px}
   #subtitle .stx span{font-size:10.5px;line-height:1.45}
   #toasts{bottom:150px}
@@ -1151,7 +1141,6 @@ body.hack .arch-face{
     <!-- 左侧 HUD -->
     <aside id="hud">
       <div class="hud-user">
-        <img src="assets/avatar.webp" alt="慕寒" onerror="this.style.visibility='hidden'">
         <div class="un">
           <b>慕寒_Official</b>
           <span>UID 543879096 · LV6</span>
@@ -1195,7 +1184,6 @@ body.hack .arch-face{
 
 <!-- 弹层 -->
 <div id="subtitle">
-  <div class="sav" data-img="avatar"><span class="ph">慕</span></div>
   <div class="stx"><b>慕寒_Official</b><span id="subtext"></span></div>
 </div>
 <div id="modal"><div class="mbox" id="mbox"></div></div>
@@ -1228,11 +1216,11 @@ const NOTICES=[
 
 /* ---------- 优秀员工栏位（主线入口） ---------- */
 const MEMBERS=[
-  {id:'ayou',img:'cover_dam',mk:'AY',cls:'arch-ayou',code:'PNS-0011',name:'阿尤',role:'行政与运营',
+  {id:'ayou',mk:'AY',cls:'arch-ayou',code:'PNS-0011',name:'阿尤',role:'行政与运营',
    desc:'公司里的万能胶。会务、报销、下午茶、打印机卡纸，全都找他。工位常年堆着三摞待签的单子，人却总在别人位置上帮忙。最近他的账号出了问题，人也有点蔫。',
    status:'账号异常',
    opts:[{k:'o1',t:'同步考勤与行程'},{k:'o2',t:'读取单据库'},{k:'o3',t:'检查账号登录地'}]},
-  {id:'xinyu',img:'cover_mi4',mk:'XY',cls:'arch-xinyu',code:'PNS-0012',name:'新雨',role:'工作室摸鱼冠军',
+  {id:'xinyu',mk:'XY',cls:'arch-xinyu',code:'PNS-0012',name:'新雨',role:'工作室摸鱼冠军',
    desc:'工作室摸鱼冠军，连续三年无人挑战成功。名义上是机库管理员，17 台老设备全归他管，每一台都「还能开机，勉强」。摸鱼内容是把同事的电脑修好。',
    status:'机库异常',
    opts:[{k:'o1',t:'读取设备清单'},{k:'o2',t:'同步机库档案'},{k:'o3',t:'检查设备启动记录'}]},
@@ -1383,7 +1371,7 @@ const CHAPTERS=[
 
 /* ---------- 控制台节点（4 个 = 4 章） ---------- */
 const CNODES=[
- {id:'ayou',name:'阿尤',mk:'AY',cls:'arch-ayou',code:'PNS-0011',img:'cover_dam',role:'行政与运营 · 账号被顶',
+ {id:'ayou',name:'阿尤',mk:'AY',cls:'arch-ayou',code:'PNS-0011',role:'行政与运营 · 账号被顶',
   chReq:1,need:null,kind:'rescue',key:'0041',keyHint:'线索 · 他账号这三天登录的次数',
   ops:[
    {k:'opt',t:'路径优化',cost:20,d:'降低本节点后续操作消耗'},
@@ -1397,7 +1385,7 @@ const CNODES=[
    s2:[['> 定位冒用者接入点 ...',''],['> 来源：内网归档区（无对应工位）','warn'],['> 备注：该区域已停用七年','warn']],
    exec:[['> 夺回 PNS-0011 ...',''],['> 原持有者已被踢出','ok'],['> 遗留痕迹：单据库被完整复制一份','err']]
   }},
- {id:'xinyu',name:'新雨',mk:'XY',cls:'arch-xinyu',code:'PNS-0012',img:'cover_mi4',role:'设备与机库 · 机库被占用',
+ {id:'xinyu',name:'新雨',mk:'XY',cls:'arch-xinyu',code:'PNS-0012',role:'设备与机库 · 机库被占用',
   chReq:2,need:'ayou',kind:'rescue',key:'0211',keyHint:'线索 · 那三台机器同时黑屏的时刻',
   ops:[
    {k:'opt',t:'路径优化',cost:20,d:'降低本节点后续操作消耗'},
@@ -2376,7 +2364,7 @@ const BATCH=[
   {b:4,t:'DEEP ARCHIVE · 归档区'}
 ];
 const batchOpen=b=>b===1||(b===2&&chDoneOf(1))||(b===3&&chDoneOf(2))||(b===4&&chDoneOf(3));
-const AVA={阿尤:'cover_dam',新雨:'cover_mi4',耗子药:'av_haozy',超级小慧:'av_xiaohui',
+const AVA={耗子药:'av_haozy',超级小慧:'av_xiaohui',
   'かねこ先生':'av_kaneko','林默-微风':'av_linmo','小橘子':'av_xiaojuzi'};
 const REPLY_COST=50;
 
@@ -2696,10 +2684,25 @@ function viewAbout(){
       ' <span class="tag'+(S.nodes[m.id].exec?' new':'')+'">'+esc(S.nodes[m.id].exec?'已恢复':m.status)+'</span></div>'+
       '<p>'+esc(m.desc)+'</p><div class="opts">'+opts+'</div></div></div>';
   }).join('');
+  const extra=CNODES.filter(n=>!MEMBERS.some(m=>m.id===n.id)&&(S.ch>=n.chReq||S.nodes[n.id].exec))
+    .map(n=>{
+      const ok=!!S.nodes[n.id].exec;
+      return '<div class="member">'+
+        '<div class="mp"><div class="arch-face '+n.cls+'"'+(n.img?' data-img="'+n.img+'" data-keep="1"':'')+'>'+
+        '<span class="mk">'+esc(n.mk)+'</span>'+
+        '<span class="subl"><span>'+esc(n.code)+'</span><span>ARCHIVED</span></span></div>'+
+        '<span class="code">'+esc(n.code)+'</span></div>'+
+        '<div class="mb"><h4>'+esc(n.name)+'</h4><div class="role">'+esc(n.role)+
+        ' <span class="tag'+(ok?' new':'')+'">'+esc(ok?'已切断':(n.status||'归档'))+'</span></div>'+
+        '<p>'+esc(n.desc||'')+'</p>'+
+        '<div class="opts"><div class="opt done" style="cursor:default">'+
+        '<span class="ck">×</span>档案已封存，无法核对</div></div>'+
+        '</div></div>';
+    }).join('');
   return '<section class="view on">'+
     '<div class="vhead"><h2><span class="idx">04</span>关于我们</h2>'+
     '<p>员工档案核对 · 需在骇入模式下进行（消耗 20 注意力，返还破译点）</p></div>'+
-    '<div class="aboutgrid">'+cards+'</div></section>';
+    '<div class="aboutgrid">'+cards+extra+'</div></section>';
 }
 
 /* ==================== 05 拓扑奖励网络 ==================== */
@@ -3238,7 +3241,6 @@ function runIntro(){
 /* ==================== 启动 ==================== */
 (function boot(){
   const restored=loadState();
-  mountImages($('#subtitle'));
   if(restored&&S.introDone){
     $('#intro').classList.add('gone');
     render();resumePlayerPosts();
