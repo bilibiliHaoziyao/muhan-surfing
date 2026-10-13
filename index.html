@@ -12,7 +12,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="慕寒的网上冲浪 · PNS 全域互联终端 — 一款单文件交互式网页游戏：潜入公司内网，查清 AI 助手失联的真相。">
-<meta name="theme-color" content="#0a0c0e">
+<meta name="theme-color" content="#eaf2fb">
 <meta property="og:type" content="website">
 <meta property="og:title" content="慕寒的网上冲浪 · PNS 全域互联终端">
 <meta property="og:description" content="她三天没说话了。她最后执行的那条指令，提交人那一栏是空的。">
@@ -21,37 +21,48 @@
 <style>
 /* ============ 基础与主题变量 ============ */
 :root{
-  --bg:#0a0c0f;
-  --bg2:#101319;
-  --panel:#15191f;
-  --panel2:#1b2029;
-  --line:#29303a;
-  --line2:#3a434f;
-  --amber:#ffb020;
-  --amber-soft:rgba(255,176,32,.14);
-  --amber-dim:#8a5f10;
-  --txt:#dde3ea;
-  --txt2:#8d97a5;
-  --txt3:#5b6673;
-  --ok:#57d98a;
-  --bad:#ff5f56;
+  /* 浅色 · 浅蓝主题（变量名沿用 amber，实际是主色蓝） */
+  --bg:#eaf2fb;
+  --bg2:#f7fbff;
+  --panel:#ffffff;
+  --panel2:#eff5fc;
+  --line:#d5e3f2;
+  --line2:#b9d0e8;
+  --amber:#1f66c7;
+  --amber-soft:rgba(31,102,199,.11);
+  --amber-dim:#8bb0e0;
+  --txt:#12314f;
+  --txt2:#54718f;
+  --txt3:#87a0bb;
+  --ok:#159f63;
+  --bad:#d64545;
+  --shadow:rgba(28,73,132,.13);
+  --scan:rgba(31,102,199,.06);
+  --grid-line:rgba(31,102,199,.05);
+  --page-deco:rgba(31,102,199,.10);
   --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Cascadia Code","Liberation Mono",monospace;
   --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
 }
-/* 骇入模式：整体换色为青绿终端风 */
+/* 骇入模式：整体换色为红色终端风 */
 body.hack{
-  --bg:#040a0a;
-  --bg2:#071112;
-  --panel:#0a1618;
-  --panel2:#0d1e20;
-  --line:#16403c;
-  --line2:#1f5f57;
-  --amber:#2ff5c8;
-  --amber-soft:rgba(47,245,200,.13);
-  --amber-dim:#127a66;
-  --txt:#cdf3ea;
-  --txt2:#6fa89e;
-  --txt3:#3f6f68;
+  --bg:#140a0c;
+  --bg2:#1c0f12;
+  --panel:#231316;
+  --panel2:#2c181c;
+  --line:#44232b;
+  --line2:#5e3039;
+  --amber:#ff4d5a;
+  --amber-soft:rgba(255,77,90,.15);
+  --amber-dim:#8e2a34;
+  --txt:#f8dfe2;
+  --txt2:#c69aa0;
+  --txt3:#94707a;
+  --ok:#ff9090;
+  --bad:#ff3b3b;
+  --shadow:rgba(0,0,0,.5);
+  --scan:rgba(255,77,90,.05);
+  --grid-line:rgba(255,77,90,.05);
+  --page-deco:rgba(255,77,90,.12);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 #app{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
@@ -68,7 +79,7 @@ body{
 }
 button{font-family:inherit;font-size:inherit;color:inherit;background:none;border:none;cursor:pointer}
 a{color:var(--amber);text-decoration:none}
-::selection{background:var(--amber);color:#000}
+::selection{background:var(--amber);color:#fff}
 
 /* 滚动条 */
 ::-webkit-scrollbar{width:9px;height:9px}
@@ -81,7 +92,7 @@ a{color:var(--amber);text-decoration:none}
 body.hack #fx{opacity:1}
 #fx::before{
   content:'';position:absolute;inset:0;
-  background:repeating-linear-gradient(0deg,rgba(0,0,0,.32) 0 1px,transparent 1px 3px);
+  background:repeating-linear-gradient(0deg,var(--scan) 0 1px,transparent 1px 3px);
 }
 #fx::after{
   content:'';position:absolute;left:0;right:0;height:180px;
@@ -102,7 +113,7 @@ body.hack #app{animation:glitch 6s infinite}
   height:38px;background:#1c2026;border-bottom:1px solid #0a0c0f;
   display:flex;align-items:center;gap:10px;padding:0 12px;flex:none;
 }
-body.hack #browserbar{background:#0b1a1c}
+body.hack #browserbar{background:#1b0e11}
 .dots{display:flex;gap:6px}
 .dots i{width:11px;height:11px;border-radius:50%;display:block}
 .dots i:nth-child(1){background:#ff5f56}
@@ -113,7 +124,7 @@ body.hack #browserbar{background:#0b1a1c}
   display:flex;align-items:center;gap:7px;padding:0 11px;
   font-family:var(--mono);font-size:11.5px;color:#7d8794;
 }
-body.hack #urlbar{background:#05100f;color:var(--txt2)}
+body.hack #urlbar{background:#210f13;color:var(--txt2)}
 #urlbar .lock{color:var(--ok);font-size:10px}
 #urlbar .u{color:#a9b3bf}
 body.hack #urlbar .u{color:var(--amber)}
@@ -135,7 +146,7 @@ body.hack #urlbar .u{color:var(--amber)}
   border-right:1px solid var(--line);min-width:210px;
 }
 .brand .mk{
-  width:34px;height:34px;flex:none;background:var(--amber);color:#000;
+  width:34px;height:34px;flex:none;background:var(--amber);color:#fff;
   display:grid;place-items:center;font-family:var(--mono);font-weight:800;
   font-size:15px;letter-spacing:-.5px;
 }
@@ -204,7 +215,7 @@ body.hack .brand .mk{box-shadow:0 0 16px var(--amber)}
   padding:11px 8px;font-family:var(--mono);font-size:12px;font-weight:600;
   letter-spacing:.5px;transition:.18s;position:relative;overflow:hidden;
 }
-#consolebtn:hover{background:var(--amber);color:#000}
+#consolebtn:hover{background:var(--amber);color:#fff}
 #consolebtn .cs,#consolebtn .ci{display:none}
 #consolebtn{white-space:nowrap}
 body.hack #consolebtn{box-shadow:0 0 18px var(--amber-soft)}
@@ -238,7 +249,7 @@ body.hack #consolebtn{box-shadow:0 0 18px var(--amber-soft)}
 body.hack .hackable{position:relative;outline:1px dashed var(--amber);outline-offset:2px;cursor:crosshair}
 body.hack .hackable::before{
   content:'HACK';position:absolute;top:-1px;right:-1px;z-index:5;
-  font-family:var(--mono);font-size:8px;background:var(--amber);color:#000;
+  font-family:var(--mono);font-size:8px;background:var(--amber);color:#fff;
   padding:1px 4px;letter-spacing:.5px;pointer-events:none;
 }
 body.hack .hackable:hover{background:var(--amber-soft)}
@@ -389,7 +400,7 @@ body.hack .hackable:hover{background:var(--amber-soft)}
 }
 .opt:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-soft)}
 .opt .ck{width:12px;height:12px;border:1px solid var(--line2);display:grid;place-items:center;font-size:9px;flex:none}
-.opt.done .ck{background:var(--ok);border-color:var(--ok);color:#000}
+.opt.done .ck{background:var(--ok);border-color:var(--ok);color:#fff}
 .opt.done{color:var(--ok);border-color:var(--ok)}
 .opt.done:hover{background:none;color:var(--ok)}
 
@@ -420,38 +431,6 @@ body.hack .hackable:hover{background:var(--amber-soft)}
 .pricerow button.buy:hover{border-color:var(--ok);color:var(--ok);background:rgba(87,217,138,.1)}
 .pricerow button.bought{border-color:var(--ok);color:var(--ok)}
 
-/* ============ 拓扑奖励网络 ============ */
-.topowrap{display:grid;grid-template-columns:1fr 320px;gap:18px}
-.topomap{
-  border:1px solid var(--line);background:var(--panel);padding:8px;position:relative;
-  min-height:380px;
-}
-.topomap svg{width:100%;height:auto;display:block}
-.tnode{cursor:pointer}
-.tnode circle{transition:.2s}
-.tnode:hover circle.tc{stroke-width:3}
-.tnode text{font-family:var(--mono);font-size:9px;fill:var(--txt2);pointer-events:none}
-.tnode.done circle.tc{fill:var(--ok);stroke:var(--ok)}
-.tnode.done text{fill:var(--ok)}
-.tnode.locked circle.tc{fill:var(--panel2);stroke:var(--line2)}
-.tnode.locked text{fill:var(--txt3)}
-.rewardlist{display:flex;flex-direction:column;gap:9px}
-.rw{
-  border:1px solid var(--line);background:var(--panel);padding:11px 12px;
-  display:flex;gap:10px;align-items:center;
-}
-.rw .ri{
-  width:40px;height:40px;flex:none;background:var(--bg2);border:1px solid var(--line2);
-  display:grid;place-items:center;font-family:var(--mono);font-size:15px;color:var(--amber);
-}
-.rw .rr{flex:1;min-width:0}
-.rw .rr b{display:block;font-size:12.5px}
-.rw .rr span{display:block;font-family:var(--mono);font-size:10px;color:var(--txt3);margin-top:2px}
-.rw .rb{border:1px solid var(--line2);padding:5px 10px;font-family:var(--mono);font-size:10.5px;color:var(--txt2);flex:none;transition:.16s}
-.rw .rb:hover:not(:disabled){border-color:var(--amber);color:var(--amber);background:var(--amber-soft)}
-.rw .rb:disabled{opacity:.3;cursor:not-allowed}
-.rw .rb.got{border-color:var(--ok);color:var(--ok)}
-
 /* ============ 控制台 ============ */
 #view-console{padding:0;max-width:none;height:100%;display:none}
 #view-console.on{display:flex}
@@ -475,7 +454,7 @@ body.hack .hackable:hover{background:var(--amber-soft)}
 .cnode .ca .ph{font-family:var(--mono);font-size:15px;color:var(--amber)}
 .cnode .ca .att{
   position:absolute;top:-6px;right:-6px;font-family:var(--mono);font-size:9px;
-  background:var(--amber);color:#000;padding:1px 4px;font-weight:700;
+  background:var(--amber);color:#fff;padding:1px 4px;font-weight:700;
 }
 .cnode .ci{flex:1;min-width:0}
 .cnode .ci b{display:block;font-size:13px}
@@ -496,7 +475,9 @@ body.hack .hackable:hover{background:var(--amber-soft)}
   font-size:11px;color:var(--txt2);transition:.16s;flex:none;
 }
 .chead .exit:hover{border-color:var(--bad);color:var(--bad)}
-.cgrid{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+.cgrid{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;align-items:start}
+.cgrid>*{min-width:0}
+.cpanel,.cpanel .pb,.term,.keylock,.cbtns{min-width:0}
 .cpanel{border:1px solid var(--line);background:var(--panel)}
 .cpanel .ph{
   padding:9px 13px;border-bottom:1px solid var(--line);background:var(--panel2);
@@ -550,14 +531,14 @@ body.hack .hackable:hover{background:var(--amber-soft)}
 
 /* ============ 弹层 / 提示 ============ */
 #modal{
-  position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.82);
+  position:fixed;inset:0;z-index:9500;background:rgba(20,46,78,.42);backdrop-filter:blur(3px);
   display:none;align-items:center;justify-content:center;padding:24px;
   backdrop-filter:blur(3px);
 }
 #modal.on{display:flex;animation:fadein .2s}
 .mbox{
   background:var(--panel);border:1px solid var(--amber);max-width:560px;width:100%;
-  max-height:86vh;overflow-y:auto;box-shadow:0 20px 70px rgba(0,0,0,.75);
+  max-height:86vh;overflow-y:auto;box-shadow:0 20px 70px var(--shadow);
 }
 body.hack .mbox{box-shadow:0 0 60px var(--amber-soft)}
 .mbox .mh{
@@ -581,7 +562,7 @@ body.hack .mbox{box-shadow:0 0 60px var(--amber-soft)}
 .mbtn{border:1px solid var(--line2);padding:8px 18px;font-size:12.5px;color:var(--txt2);transition:.16s}
 .mbtn:hover{border-color:var(--txt);color:var(--txt)}
 .mbtn.primary{border-color:var(--amber);color:var(--amber);background:var(--amber-soft)}
-.mbtn.primary:hover{background:var(--amber);color:#000}
+.mbtn.primary:hover{background:var(--amber);color:#fff}
 .mbtn:disabled{opacity:.32;cursor:not-allowed}
 .mbtn:disabled:hover{border-color:var(--line2);color:var(--txt2);background:none}
 
@@ -608,7 +589,7 @@ body.hack .mbox{box-shadow:0 0 60px var(--amber-soft)}
 #toasts{position:fixed;right:18px;bottom:18px;z-index:9600;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
 .toast{
   background:var(--panel);border-left:3px solid var(--amber);padding:10px 15px;
-  font-size:12.5px;box-shadow:0 6px 22px rgba(0,0,0,.55);animation:slidein .26s;
+  font-size:12.5px;box-shadow:0 6px 22px var(--shadow);animation:slidein .26s;
   max-width:330px;
 }
 .toast.ok{border-color:var(--ok)}
@@ -682,7 +663,7 @@ body.hack .mbox{box-shadow:0 0 60px var(--amber-soft)}
 .taskline:last-child{border:none}
 .taskline .tk{flex:none;width:18px;height:18px;border:1px solid var(--line2);display:grid;place-items:center;
   font-family:var(--mono);font-size:10px;color:var(--txt3);margin-top:2px}
-.taskline.done .tk{background:var(--ok);border-color:var(--ok);color:#000}
+.taskline.done .tk{background:var(--ok);border-color:var(--ok);color:#fff}
 .taskline.done{color:var(--txt3);text-decoration:line-through}
 .taskline .tn{flex:1}
 .taskline .tn small{display:block;font-family:var(--mono);font-size:10px;color:var(--txt3);margin-top:2px}
@@ -739,7 +720,7 @@ body.hack .mbox{box-shadow:0 0 60px var(--amber-soft)}
 .forumstat b{color:var(--amber);font-size:13px}
 .forumacts{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:13px}
 .minibtn.prime{color:var(--amber);border-color:var(--amber)}
-.minibtn.prime:hover{background:var(--amber);color:#000}
+.minibtn.prime:hover{background:var(--amber);color:#fff}
 .tag.key{color:var(--amber);border-color:var(--amber)}
 .chatend{margin-top:12px;padding:9px 12px;font-family:var(--mono);font-size:11px;
   color:var(--ok);background:var(--bg2);border-left:2px solid var(--ok);border-radius:0 5px 5px 0}
@@ -779,11 +760,11 @@ body.hack .mbox{box-shadow:0 0 60px var(--amber-soft)}
   position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(16px);
   width:min(720px,calc(100vw - 44px));z-index:8500;
   display:flex;gap:12px;align-items:flex-start;
-  background:rgba(8,10,13,.94);border:1px solid var(--line2);border-left:3px solid var(--amber);
+  background:var(--panel);border:1px solid var(--line2);border-left:3px solid var(--amber);
   padding:11px 17px;opacity:0;pointer-events:none;transition:opacity .28s,transform .28s;
-  box-shadow:0 10px 34px rgba(0,0,0,.65);
+  box-shadow:0 10px 34px var(--shadow);
 }
-body.hack #subtitle{border-left-color:var(--amber);box-shadow:0 0 26px var(--amber-soft),0 10px 34px rgba(0,0,0,.6)}
+body.hack #subtitle{border-left-color:var(--amber);box-shadow:0 0 26px var(--amber-soft),0 10px 34px var(--shadow)}
 #subtitle.on{opacity:1;transform:translateX(-50%) translateY(0)}
 #subtitle .stx{flex:1;min-width:0}
 #subtitle .stx b{
@@ -797,7 +778,7 @@ body.hack #subtitle{border-left-color:var(--amber);box-shadow:0 0 26px var(--amb
 /* ---- 存档提示 ---- */
 #hintbtn{margin-top:10px;width:100%;padding:8px 10px;font-family:var(--mono);font-size:11px;
   color:var(--amber);background:transparent;border:1px solid var(--amber);border-radius:6px;cursor:pointer;transition:.2s}
-#hintbtn:hover{background:var(--amber);color:#000}
+#hintbtn:hover{background:var(--amber);color:#fff}
 .savehint{
   font-family:var(--mono);font-size:9.5px;color:var(--txt3);
   display:flex;align-items:center;gap:6px;margin-top:9px;cursor:pointer;
@@ -820,8 +801,10 @@ body.hack #subtitle{border-left-color:var(--amber);box-shadow:0 0 26px var(--amb
 .dreply .dra{
   width:30px;height:30px;flex:none;border-radius:50%;background:var(--bg2);border:1px solid var(--line2);
   display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:var(--amber);
+  overflow:hidden;
 }
-.dreply.mine .dra{background:var(--amber);color:#000;border-color:var(--amber)}
+.dreply .dra img{width:100%;height:100%;object-fit:cover}
+.dreply.mine .dra{background:var(--amber);color:#fff;border-color:var(--amber)}
 .dreply .drc{flex:1;min-width:0}
 .dreply .drc b{display:block;font-size:11.5px;color:var(--amber);margin-bottom:3px;font-weight:500}
 .dreply.mine .drc b{color:var(--amber)}
@@ -862,7 +845,7 @@ body.hack #subtitle{border-left-color:var(--amber);box-shadow:0 0 26px var(--amb
   width:24px;height:24px;flex:none;border:1px solid var(--line2);display:grid;place-items:center;
   font-family:var(--mono);font-size:11px;color:var(--txt2);
 }
-.clue.done .cnum{background:var(--ok);border-color:var(--ok);color:#000}
+.clue.done .cnum{background:var(--ok);border-color:var(--ok);color:#fff}
 .clue .cbody{flex:1;min-width:0}
 .clue .cbody b{display:block;font-size:13.5px;margin-bottom:5px}
 .clue .cbody p{font-size:12px;color:var(--txt2);line-height:1.7}
@@ -875,7 +858,7 @@ body.hack #subtitle{border-left-color:var(--amber);box-shadow:0 0 26px var(--amb
 .choicebtn.danger:hover{background:rgba(255,95,86,.1)}
 
 /* ---- 内部系统：档案卡（替代照片） ---- */
-.arch-face.hasbg{background-size:cover;background-position:center;background-repeat:no-repeat}
+.arch-face.hasbg{background-size:cover;background-position:center center;background-repeat:no-repeat;background-attachment:scroll}
 .arch-face.hasbg .mk{display:none}
 .arch-face.hasbg .subl{background:rgba(0,0,0,.62);color:#fff;border-color:transparent}
 .arch-face.hasbg .subl span:last-child{color:rgba(255,255,255,.6)}
@@ -884,15 +867,15 @@ body.hack #subtitle{border-left-color:var(--amber);box-shadow:0 0 26px var(--amb
   width:100%;height:100%;position:relative;display:grid;place-items:center;overflow:hidden;
   background:
     radial-gradient(circle at 50% 38%, color-mix(in srgb,var(--accent) 16%, transparent), transparent 68%),
-    repeating-linear-gradient(0deg, transparent 0 11px, rgba(255,255,255,.03) 11px 12px),
-    repeating-linear-gradient(90deg, transparent 0 11px, rgba(255,255,255,.03) 11px 12px),
+    repeating-linear-gradient(0deg, transparent 0 11px, var(--grid-line) 11px 12px),
+    repeating-linear-gradient(90deg, transparent 0 11px, var(--grid-line) 11px 12px),
     var(--bg2);
 }
-body.hack .arch-face{
+body.hack .arch-face:not(.hasbg){ /* 有真实头像的档案卡不参与渐变重置，否则 background-size 会被清掉 */
   background:
     radial-gradient(circle at 50% 38%, color-mix(in srgb,var(--accent) 20%, transparent), transparent 68%),
-    repeating-linear-gradient(0deg, transparent 0 11px, rgba(47,245,200,.045) 11px 12px),
-    repeating-linear-gradient(90deg, transparent 0 11px, rgba(47,245,200,.045) 11px 12px),
+    repeating-linear-gradient(0deg, transparent 0 11px, var(--grid-line) 11px 12px),
+    repeating-linear-gradient(90deg, transparent 0 11px, var(--grid-line) 11px 12px),
     var(--bg2);
 }
 .arch-face::before{
@@ -959,6 +942,7 @@ body.hack .arch-face{
   .headstatus{display:none}
   .cmain{padding:16px}
   .consolewrap{grid-template-columns:1fr}
+  .cgrid{grid-template-columns:minmax(0,1fr)}
   .cnodes{max-height:190px}
   #view-console.on{flex-direction:column}
   .chead{flex-direction:column;gap:10px}
@@ -1019,7 +1003,7 @@ body.hack .arch-face{
   /* 控制台入口改为浮动按钮 */
   #hudconsole{margin:0;padding:0;position:fixed;right:10px;bottom:80px;z-index:8100}
   #consolebtn{width:auto;padding:8px 10px;font-size:10.5px;border-radius:50px;
-    background:var(--amber);color:#000;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+    background:var(--amber);color:#fff;font-weight:700;box-shadow:0 4px 16px var(--shadow)}
   #consolebtn .cs{display:none}
   #consolebtn .ci{display:inline;font-size:14px}
   #consolebtn small{display:none}
@@ -1156,7 +1140,7 @@ body.hack .arch-face{
         <div class="hud-label"><span>破译点 DECODE</span></div>
         <div class="hud-num" id="hudDec">0</div>
         <div class="hud-bar"><i id="barDec"></i></div>
-        <div class="hud-tip">用于骇入与兑换凭证 · 随调查推进获取</div>
+        <div class="hud-tip">用于骇入节点的每一步操作 · 随调查推进获取</div>
       </div>
       <div class="hud-sec">
         <div class="hud-label"><span>节点进度 NODES</span></div>
@@ -1216,11 +1200,11 @@ const NOTICES=[
 
 /* ---------- 优秀员工栏位（主线入口） ---------- */
 const MEMBERS=[
-  {id:'ayou',mk:'AY',cls:'arch-ayou',code:'PNS-0011',name:'阿尤',role:'行政与运营',
+  {id:'ayou',img:'av_ayou',mk:'AY',cls:'arch-ayou',code:'PNS-0011',name:'阿尤',role:'行政与运营',
    desc:'公司里的万能胶。会务、报销、下午茶、打印机卡纸，全都找他。工位常年堆着三摞待签的单子，人却总在别人位置上帮忙。最近他的账号出了问题，人也有点蔫。',
    status:'账号异常',
    opts:[{k:'o1',t:'同步考勤与行程'},{k:'o2',t:'读取单据库'},{k:'o3',t:'检查账号登录地'}]},
-  {id:'xinyu',mk:'XY',cls:'arch-xinyu',code:'PNS-0012',name:'新雨',role:'工作室摸鱼冠军',
+  {id:'xinyu',img:'av_xinyu',mk:'XY',cls:'arch-xinyu',code:'PNS-0012',name:'新雨',role:'工作室摸鱼冠军',
    desc:'工作室摸鱼冠军，连续三年无人挑战成功。名义上是机库管理员，17 台老设备全归他管，每一台都「还能开机，勉强」。摸鱼内容是把同事的电脑修好。',
    status:'机库异常',
    opts:[{k:'o1',t:'读取设备清单'},{k:'o2',t:'同步机库档案'},{k:'o3',t:'检查设备启动记录'}]},
@@ -1255,17 +1239,6 @@ const MISSING={
   ]
 };
 
-/* ---------- 拓扑奖励（PNS 内部凭证） ---------- */
-const REWARDS=[
-  {id:'r1',icon:'席',name:'见义勇为 席位卡',cost:800,req:1},
-  {id:'r2',icon:'维',name:'系统维护 通行证',cost:1000,req:2},
-  {id:'r3',icon:'慧',name:'超级小慧 感谢信',cost:1200,req:3},
-  {id:'r4',icon:'盾',name:'内网安全 勋章',cost:1500,req:3},
-  {id:'r5',icon:'档',name:'归档区 调查员证',cost:1400,req:3},
-  {id:'r6',icon:'光',name:'PNS 重建者 称号',cost:1800,req:4},
-  {id:'r7',icon:'正',name:'【慕寒的选择】专属凭证',cost:0,req:4,needChoice:'muhan'},
-  {id:'r8',icon:'暗',name:'【耗子药的选择】专属凭证',cost:0,req:4,needChoice:'haozy'}
-];
 
 /* ---------- 主线章节 ---------- */
 /* ---------- 主线章节 ---------- */
@@ -1371,7 +1344,7 @@ const CHAPTERS=[
 
 /* ---------- 控制台节点（4 个 = 4 章） ---------- */
 const CNODES=[
- {id:'ayou',name:'阿尤',mk:'AY',cls:'arch-ayou',code:'PNS-0011',role:'行政与运营 · 账号被顶',
+ {id:'ayou',name:'阿尤',mk:'AY',cls:'arch-ayou',code:'PNS-0011',img:'av_ayou',role:'行政与运营 · 账号被顶',
   chReq:1,need:null,kind:'rescue',key:'0041',keyHint:'线索 · 他账号这三天登录的次数',
   ops:[
    {k:'opt',t:'路径优化',cost:20,d:'降低本节点后续操作消耗'},
@@ -1385,7 +1358,7 @@ const CNODES=[
    s2:[['> 定位冒用者接入点 ...',''],['> 来源：内网归档区（无对应工位）','warn'],['> 备注：该区域已停用七年','warn']],
    exec:[['> 夺回 PNS-0011 ...',''],['> 原持有者已被踢出','ok'],['> 遗留痕迹：单据库被完整复制一份','err']]
   }},
- {id:'xinyu',name:'新雨',mk:'XY',cls:'arch-xinyu',code:'PNS-0012',role:'设备与机库 · 机库被占用',
+ {id:'xinyu',name:'新雨',mk:'XY',cls:'arch-xinyu',code:'PNS-0012',img:'av_xinyu',role:'设备与机库 · 机库被占用',
   chReq:2,need:'ayou',kind:'rescue',key:'0211',keyHint:'线索 · 那三台机器同时黑屏的时刻',
   ops:[
    {k:'opt',t:'路径优化',cost:20,d:'降低本节点后续操作消耗'},
@@ -2070,8 +2043,7 @@ const VIEWS=[
   {id:'forum',   name:'员工论坛',      idx:'02'},
   {id:'missing', name:'寻人启事',      idx:'03'},
   {id:'about',   name:'关于我们',      idx:'04'},
-  {id:'topology',name:'拓扑奖励网络',  idx:'05'},
-  {id:'quest',   name:'主线任务',      idx:'06'}
+  {id:'quest',   name:'主线任务',      idx:'05'}
 ];
 
 /* ==================== 状态 ==================== */
@@ -2209,7 +2181,7 @@ function mountImages(root){
     if(n.querySelector('img'))return;
     const im=new Image();
     im.src='assets/'+n.dataset.img+'.webp';
-    im.onerror=()=>{n.innerHTML='<span class="ph">'+((n.querySelector('.ph')||{}).textContent||'无信号')+'</span>';};
+    im.onerror=()=>{n.innerHTML='<span class="ph">'+esc(n.dataset.fb||((n.querySelector('.ph')||{}).textContent||'无信号'))+'</span>';};
     im.onload=()=>{n.innerHTML='';n.appendChild(im);};
   });
 }
@@ -2234,7 +2206,6 @@ const NAV_SAY={
   forum:'论坛最关键。一段对话能来回好几轮，问得越细，拿到的东西越多。',
   missing:'寻人启事。三天了，我每天都来看一眼。',
   about:'员工档案。核对一遍，才知道谁被冒用过。',
-  topology:'内部凭证，攒够了就换点东西。',
   quest:'按线索一段一段来。急不得。'
 };
 function go(v){
@@ -2245,7 +2216,7 @@ function render(){
   window.__PNSAPI.render=render;window.__PNSAPI.showChoice=showChoice;
   nav();hud();
   const map={home:viewHome,console:viewConsole,forum:viewForum,missing:viewMissing,
-             about:viewAbout,topology:viewTopology,quest:viewQuest};
+             about:viewAbout,quest:viewQuest};
   content.innerHTML=(map[S.view]||viewHome)();
   mountImages(content);
 }
@@ -2364,7 +2335,7 @@ const BATCH=[
   {b:4,t:'DEEP ARCHIVE · 归档区'}
 ];
 const batchOpen=b=>b===1||(b===2&&chDoneOf(1))||(b===3&&chDoneOf(2))||(b===4&&chDoneOf(3));
-const AVA={耗子药:'av_haozy',超级小慧:'av_xiaohui',
+const AVA={阿尤:'av_ayou',新雨:'av_xinyu',耗子药:'av_haozy',超级小慧:'av_xiaohui',
   'かねこ先生':'av_kaneko','林默-微风':'av_linmo','小橘子':'av_xiaojuzi'};
 const REPLY_COST=50;
 
@@ -2426,6 +2397,10 @@ function roundsOf(t){return t.rounds||(t.mine?MYPOST_ROUNDS:[]);}
 function tDone(t){const st=S.thread[t.id];return !!st&&typeof st!=='number'&&st.r>=roundsOf(t).length;}
 function keyDoneCount(){return THREADS.filter(t=>t.key&&tDone(t)).length;}
 function postCount(){return (S.cnt.post||0);}
+function draAv(a){
+  const av=AVA[a];
+  return '<div class="dra"'+(av?' data-img="'+av+'"':'')+' data-fb="'+esc(a[0])+'">'+esc(a[0])+'</div>';
+}
 function replyTotal(t){
   const st=S.thread[t.id];
   const mine=st&&typeof st!=='number'?st.r:0;
@@ -2499,18 +2474,18 @@ function openThread(tid,o){
   const av=AVA[t.author]||'';
   let body='';
   t.replies.forEach(x=>{
-    body+='<div class="dreply"><div class="dra">'+esc(x.a[0])+'</div>'+
+    body+='<div class="dreply">'+draAv(x.a)+
       '<div class="drc"><b>'+esc(x.a)+'</b><span>'+esc(x.c)+'</span></div></div>';
   });
   for(let i=0;i<r;i++){
     const rd=rounds[i],op=rd.opts[picked[i]];
-    body+='<div class="dreply mine"><div class="dra">慕</div><div class="drc"><b>慕寒（你）</b>'+
+    body+='<div class="dreply mine">'+draAv('慕寒（你）')+'<div class="drc"><b>慕寒（你）</b>'+
       '<span>'+esc(op.t)+'</span></div></div>';
     if(o.typing&&i===r-1){
       body+='<div class="typing"><i></i><i></i><i></i> 有人正在回复…</div>';
     }else{
       op.then.forEach(x=>{
-        body+='<div class="dreply"><div class="dra">'+esc(x.a[0])+'</div><div class="drc"><b>'+esc(x.a)+
+        body+='<div class="dreply">'+draAv(x.a)+'<div class="drc"><b>'+esc(x.a)+
           '</b><span>'+esc(x.c)+'</span></div></div>';
       });
     }
@@ -2703,47 +2678,6 @@ function viewAbout(){
     '<div class="vhead"><h2><span class="idx">04</span>关于我们</h2>'+
     '<p>员工档案核对 · 需在骇入模式下进行（消耗 20 注意力，返还破译点）</p></div>'+
     '<div class="aboutgrid">'+cards+extra+'</div></section>';
-}
-
-/* ==================== 05 拓扑奖励网络 ==================== */
-function viewTopology(){
-  const unlocked=Math.min(4,hackedCount()+(S.mainHack?1:0));
-  const rw=REWARDS.map(r=>{
-    const got=S.reward[r.id];
-    const lock=r.req>unlocked||(r.needChoice&&S.choice!==r.needChoice);
-    return '<div class="rw"><div class="ri">'+esc(r.icon)+'</div>'+
-      '<div class="rr"><b>'+esc(r.name)+'</b><span>'+
-      (got?'已入账':(r.needChoice?(S.choice?'已授予':'完成终章后授予'):(lock?'需恢复 '+r.req+' 个节点':r.cost+' 破译点')))+'</span></div>'+
-      (r.needChoice?'':'<button class="rb '+(got?'got':'')+'" data-reward="'+r.id+'"'+
-        (got||lock||S.dec<r.cost?' disabled':'')+'>'+(got?'✓':(lock?'未解锁':'兑换'))+'</button>')+
-      '</div>';
-  }).join('');
-  const labels={haozy:'HZY-0000',ayou:'PNS-0011',xinyu:'PNS-0012',xiaohui:'SYS-0001',main:'PNS-MAIN'};
-  const P=[{x:300,y:52,id:'ayou'},{x:150,y:168,id:'xinyu'},{x:450,y:168,id:'xiaohui'},{x:300,y:290,id:'haozy'},{x:300,y:382,id:'main'}];
-  const E=[[0,1],[0,2],[1,3],[2,3],[3,4]];
-  const on=id=>id==='main'?S.mainHack:!!(S.nodes[id]&&S.nodes[id].exec);
-  let svg='<svg viewBox="0 0 600 420" xmlns="http://www.w3.org/2000/svg">'+
-    '<defs><filter id="g"><feGaussianBlur stdDeviation="3" result="b"/>'+
-    '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>';
-  E.forEach(e=>{const a=P[e[0]],b=P[e[1]],lit=on(a.id)&&on(b.id);
-    svg+='<line x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'" stroke="'+(lit?'var(--ok)':'var(--line)')+
-      '" stroke-width="'+(lit?'2':'1.2')+'" stroke-dasharray="'+(lit?'':'5 4')+'"/>';});
-  P.forEach((p,i)=>{
-    const isMain=p.id==='main',done=isMain?S.mainHack:on(p.id),lock=!done&&i>=unlocked;
-    svg+='<g class="tnode '+(done?'done':(lock?'locked':''))+'">'+
-      '<circle class="tc" cx="'+p.x+'" cy="'+p.y+'" r="'+(isMain?'24':'19')+'" fill="'+
-      (done?'var(--ok)':'var(--panel2)')+'" stroke="'+(done?'var(--ok)':'var(--line2)')+'" stroke-width="2"'+
-      (done?' filter="url(#g)"':'')+'/>'+
-      '<text x="'+p.x+'" y="'+(p.y+4)+'" text-anchor="middle" fill="'+(done?'#000':'')+'">'+
-      (isMain?'MAIN':(i+1))+'</text>'+
-      '<text x="'+p.x+'" y="'+(p.y+40)+'" text-anchor="middle">'+labels[p.id]+'</text></g>';
-  });
-  svg+='<text x="300" y="412" text-anchor="middle" fill="var(--txt3)" font-family="ui-monospace,monospace" font-size="10">— PNS INTRANET TOPOLOGY —</text></svg>';
-  return '<section class="view on">'+
-    '<div class="vhead"><h2><span class="idx">05</span>拓扑奖励网络</h2>'+
-    '<p>消耗破译点兑换内部凭证 · 已恢复节点 '+hackedCount()+' / 4</p></div>'+
-    '<div class="topowrap"><div class="topomap">'+svg+'</div>'+
-    '<div><div class="sec-title">可兑换凭证</div><div class="rewardlist">'+rw+'</div></div></div></section>';
 }
 
 /* ==================== 控制台 ==================== */
@@ -3011,16 +2945,6 @@ document.addEventListener('click',function(e){
     checkChapter();saveState();render();return;
   }
 
-  const rw=T('[data-reward]');
-  if(rw&&!rw.disabled){
-    const r=REWARDS.find(x=>x.id===rw.dataset.reward);
-    if(!spendDec(r.cost))return;
-    S.reward[r.id]=1;S.cnt.reward++;
-    toast('已兑换：'+r.name,'ok','-'+r.cost+' 破译点');
-    say('兑换完成。攒这些可不容易。');
-    checkChapter();saveState();render();return;
-  }
-
   /* 骇入模式点击卡片 */
   const hk=T('[data-hack]');
   if(hk){
@@ -3120,7 +3044,7 @@ function showChoice(){
     '</div>');
 }
 function showEnding(who){
-  S.choice=who;S.reward[who==='muhan'?'r7':'r8']=1;
+  S.choice=who;
   S.chDone[4]=true;saveState();
   const good=who==='muhan';
   say(good?'我把门关上了。她还在外面等着，我们得去开会。':'……原来伸手这么容易。容易到我一点都不慌。',12000);
