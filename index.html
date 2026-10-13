@@ -775,6 +775,22 @@ body.hack #subtitle{border-left-color:var(--amber);box-shadow:0 0 26px var(--amb
 #subtitle .caret{display:inline-block;width:6px;height:12px;background:var(--amber);
   vertical-align:-1px;margin-left:2px;animation:blink .8s step-end infinite}
 
+/* ---- 开发人员选项 ---- */
+.devflag{
+  margin-top:10px;font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;
+  color:var(--bad);border:1px dashed var(--bad);border-radius:5px;padding:4px 7px;text-align:center;
+}
+.devlist{display:flex;flex-direction:column;gap:10px}
+.devrow{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  border:1px solid var(--line);background:var(--panel2);border-radius:7px;padding:11px 12px;
+}
+.devrow .dt b{display:block;font-size:13.5px;margin-bottom:3px}
+.devrow .dt span{font-size:11.5px;color:var(--txt2);line-height:1.6}
+.devrow .minibtn{flex:none;min-width:70px}
+.keylock.devmode{border-color:var(--bad);border-style:dashed}
+.keylock.devmode .kl-i{color:var(--bad)}
+
 /* ---- 资源加载屏 ---- */
 #loader{
   position:fixed;inset:0;z-index:9900;background:var(--bg);
@@ -1189,6 +1205,7 @@ body.hack .arch-face:not(.hasbg){ /* 有真实头像的档案卡不参与渐变�
       <div class="hud-sec">
         <div class="hud-label"><span>节点进度 NODES</span></div>
         <div class="hud-progress">已恢复 <span class="pv" id="hudNode">0</span> / 4</div>
+        <div class="devflag" id="devflag" style="display:none">⚙ DEV MODE</div>
       </div>
       <div class="hud-sec">
         <div class="hud-label"><span>主线进度 CHAPTER</span></div>
@@ -1201,7 +1218,7 @@ body.hack .arch-face:not(.hasbg){ /* 有真实头像的档案卡不参与渐变�
           <small>点击 / TAB 进入骇入界面</small>
         </button>
         <button id="hintbtn" title="实在卡住了，问一句"><span class="lg">慕寒，我该做什么？</span><span class="sm">提示</span></button>
-        <button id="musicbtn" title="开关背景音乐"><span class="lg">♪ 音乐 40%</span><span class="sm">♪</span></button>
+        <button id="musicbtn" title="开关背景音乐"><span class="lg">♪ 音乐 100%</span><span class="sm">♪</span></button>
         <div class="savehint" id="savehint"><i></i><span id="savehintT">进度自动保存</span></div>
       </div>
     </aside>
@@ -2115,6 +2132,7 @@ const S={
   posts:[], postRep:{},
   cnt:{forum:0,clue:0,member:0,reward:0,post:0},
   ch:1, chDone:{}, coolUntil:0, mainHack:false, mainKey:0, choice:null,
+  dev:{inf:false,nokey:false,nocool:false},
   introDone:false, questSeen:true
 };
 CNODES.forEach(n=>{S.nodes[n.id]={}});
@@ -2187,7 +2205,7 @@ function saveState(){
       v:3,att:S.att,dec:S.dec,ch:S.ch,chDone:S.chDone,nodes:S.nodes,
       thread:S.thread,clues:S.clues,member:S.member,reward:S.reward,
       posts:S.posts,postRep:S.postRep,
-      cnt:S.cnt,mainHack:S.mainHack,mainKey:S.mainKey,choice:S.choice,coolUntil:S.coolUntil,
+      cnt:S.cnt,mainHack:S.mainHack,mainKey:S.mainKey,choice:S.choice,coolUntil:S.coolUntil,dev:S.dev,
       view:S.view,cnode:S.cnode,intro:1
     }));
     const h=$('#savehintT');if(h)h.textContent='进度已保存';
@@ -2206,6 +2224,7 @@ function loadState(){
     S.posts=(d.posts||[]).map(p=>Object.assign({author:'慕寒（你）',views:'12',date:'2026-10-11'},p));
     S.postRep=d.postRep||{};
     S.cnt=Object.assign({forum:0,clue:0,member:0,reward:0,post:0},d.cnt||{});
+    S.dev=Object.assign({inf:false,nokey:false,nocool:false},d.dev||{});
     /* 旧版存档里一帖只存了一个数字（选项下标），转成新结构 */
     S.thread={};
     Object.keys(d.thread||{}).forEach(k=>{
@@ -2246,10 +2265,12 @@ function mountImages(root){
 
 /* ==================== HUD ==================== */
 function hud(){
-  $('#hudAtt').innerHTML=S.att+'<small>/1000</small>';
-  $('#hudDec').innerHTML=S.dec;
-  $('#barAtt').style.width=Math.min(100,S.att/1000*100)+'%';
-  $('#barDec').style.width=Math.min(100,S.dec/3000*100)+'%';
+  const inf=devOn();
+  $('#hudAtt').innerHTML=(inf?'∞':S.att)+'<small>/1000</small>';
+  $('#hudDec').innerHTML=(inf?'∞':S.dec);
+  $('#barAtt').style.width=(inf?100:Math.min(100,S.att/1000*100))+'%';
+  $('#barDec').style.width=(inf?100:Math.min(100,S.dec/3000*100))+'%';
+  const df=$('#devflag');if(df)df.style.display=(inf||S.dev.nokey||S.dev.nocool)?'block':'none';
   $('#hudNode').textContent=hackedCount();
   const ch=CHAPTERS.find(c=>c.id===S.ch);
   $('#hudCh').textContent=ch?ch.name:'已完结';
@@ -2595,12 +2616,8 @@ function doReply(tid,idx){
   if(st.r>=rounds.length)return;
   const op=rounds[st.r].opts[idx];if(!op)return;
   const gain=t.key?120:80;
-  if(S.att<REPLY_COST){
-    toast('注意力不足，需要 '+REPLY_COST+' 点','err','资源不足');
-    say('注意力不够了。等一会儿，或者先去干点别的。');
-    return;
-  }
-  S.att-=REPLY_COST;S.dec+=gain;S.cnt.forum++;
+  if(!payAtt(REPLY_COST))return;
+  S.dec+=gain;S.cnt.forum++;
   st.picks.push(idx);st.r++;
   const finished=st.r>=rounds.length;
   toast(t.key?'关键对话推进':'回复已发出','ok','+'+gain+' 破译点');
@@ -2637,8 +2654,7 @@ function submitPost(){
   const tt=title.trim(),bb=body.trim();
   if(tt.length<2){toast('标题太短了','err','发帖失败');return;}
   if(bb.length<8){toast('内容再写详细一点','err','发帖失败');return;}
-  if(S.att<20){toast('注意力不足，需要 20 点','err','资源不足');say('注意力不够，写帖也得有精神。');return;}
-  S.att-=20;
+  if(!payAtt(20))return;
   const id='p'+Date.now().toString().slice(-8);
   const bd=BATCH.find(x=>x.b===bid)||BATCH[0];
   S.posts.push({id:id,title:tt,body:bb,batch:bid,tag:bd.t.split(' · ')[1]||'讨论',
@@ -2752,7 +2768,8 @@ function viewAbout(){
 /* ==================== 控制台 ==================== */
 function viewConsole(){
   const cur=CNODES.find(n=>n.id===S.cnode)||CNODES[0];
-  const st=S.nodes[cur.id],done=!!st.exec,cooling=Date.now()<S.coolUntil;
+  const st=S.nodes[cur.id],done=!!st.exec;
+  const cooling=(!S.dev.nocool)&&Date.now()<S.coolUntil;
   const nodes=CNODES.map(n=>{
     const s=S.nodes[n.id],av=nodeAvailOf(n),locked=av!=='ok'&&!s.exec;
     return '<div class="cnode '+(n.id===S.cnode?'on':'')+' '+(s.exec?'hacked':'')+' '+(locked?'locked':'')+
@@ -2767,7 +2784,7 @@ function viewConsole(){
     const d=!!st[o.k],prevOk=i===0||!!st[cur.ops[i-1].k];
     const cost=o.k!=='opt'&&optOn?Math.round(o.cost*0.7):o.cost;
     const isExec=o.k==='exec';
-    const keyOk=!isExec||!!st.keyOk;
+    const keyOk=!isExec||!!st.keyOk||!!S.dev.nokey;
     const dis=d||!prevOk||(isExec&&(cooling||!keyOk));
     const sub=d?'已完成':(!prevOk?'需先完成上一步':(isExec&&!keyOk?'等待授权密钥':(cooling&&isExec?'节点冷却中':esc(o.d))));
     return '<button class="cbtn '+(d?'done':'')+' '+(isExec?'prime':'')+'" data-cop="'+o.k+'"'+(dis?' disabled':'')+'>'+
@@ -2787,9 +2804,10 @@ function viewConsole(){
      mainReady?('<div class="mono" style="font-size:11.5px;color:var(--txt2);margin-bottom:12px">'+
        '耗子药的所有通道都被切断了。他在归档区最深处等你。</div>'+
        mainKeyPanel()+
-       '<button class="cbtn prime" data-main="1"'+(S.mainKey?'':' disabled')+' style="width:100%">'+
-       '<span><b>走进地下室</b><span>'+(S.mainKey?'破译最终节点 · 面对耗子药':'等待授权密钥')+'</span></span>'+
-       '<span class="cost">'+(S.mainKey?'500 破译点':'🔒')+'</span></button>'):
+       (function(){const mk=S.mainKey||S.dev.nokey;
+         return '<button class="cbtn prime" data-main="1"'+(mk?'':' disabled')+' style="width:100%">'+
+         '<span><b>走进地下室</b><span>'+(mk?'破译最终节点 · 面对耗子药':'等待授权密钥')+'</span></span>'+
+         '<span class="cost">'+(mk?'500 破译点':'🔒')+'</span></button>';})()):
      '<div class="mono" style="font-size:11.5px;color:var(--txt3)">需完成第三章并恢复全部节点。</div>')+
     '</div></div>';
   const m=MEMBERS.find(x=>x.id===cur.id)||{};
@@ -2836,6 +2854,7 @@ function keyMatch(input,key){
 }
 function keyPanel(cur,st){
   if(st.exec)return '';
+  if(S.dev.nokey)return '<div class="keylock ok devmode"><span class="kl-i">⚙ 开发者模式 · 已跳过密钥校验</span></div>';
   if(st.keyOk)return '<div class="keylock ok"><span class="kl-i">🔓 已授权 · '+esc(cur.code)+'</span></div>';
   return '<div class="keylock"><div class="kl-t">节点授权 · 执行前需要密钥</div>'+
     '<div class="kl-row"><input id="keyIn" class="kl-i" maxlength="12" autocomplete="off" '+
@@ -2845,6 +2864,7 @@ function keyPanel(cur,st){
     '<div class="kl-n">（数字不足四位请在前面补 0）</div></div>';
 }
 function mainKeyPanel(){
+  if(S.dev.nokey)return '<div class="keylock ok devmode"><span class="kl-i">⚙ 开发者模式 · 已跳过密钥校验</span></div>';
   if(S.mainKey)return '<div class="keylock ok"><span class="kl-i">🔓 已授权 · PNS-MAIN</span></div>';
   return '<div class="keylock"><div class="kl-t">最终节点授权 · 需要密钥</div>'+
     '<div class="kl-row"><input id="keyInM" class="kl-i" maxlength="12" autocomplete="off" '+
@@ -2949,16 +2969,58 @@ function hintNow(){
 }
 
 /* ==================== 事件 ==================== */
+function devOn(){return !!S.dev.inf;}
+function payAtt(n){
+  if(devOn())return true;
+  if(S.att<n){toast('注意力不足，需要 '+n+' 点','err','资源不足');say('注意力不够了。等一会儿，或者先去干点别的。');return false;}
+  S.att-=n;return true;
+}
 function spendDec(cost){
+  if(devOn())return true;
   if(S.dec<cost){toast('破译点不足，需要 '+cost+' 点','err','资源不足');say('破译点不够。去论坛回几个帖子攒攒。');return false;}
   S.dec-=cost;return true;
 }
+/* 连点「慕寒的控制台」10 次进入开发人员选项 */
+let devTap=0,devTapT=null;
+function openDev(){
+  const d=S.dev;
+  const row=(k,t,desc)=>'<div class="devrow"><div class="dt"><b>'+t+'</b><span>'+desc+'</span></div>'+
+    '<button class="minibtn'+(d[k]?' prime':'')+'" data-dev="'+k+'">'+(d[k]?'已开启':'已关闭')+'</button></div>';
+  modal('<div class="mh"><h3>⚙ 开发人员选项</h3><span class="x" data-close="1">×</span></div>'+
+    '<div class="mb2">'+
+      '<div class="devlist">'+
+        row('inf','无限资源','注意力和破译点不再消耗，HUD 显示 ∞')+
+        row('nokey','跳过密钥校验','所有节点的授权密钥直接放行')+
+        row('nocool','忽略节点冷却','处理完一个节点可以立刻处理下一个')+
+      '</div>'+
+      '<p class="dim" style="font-size:11px;margin-top:14px">仅供内部调试。开关会写进当前存档，不影响剧情与存档结构。</p>'+
+    '</div>'+
+    '<div class="mf"><button class="mbtn" data-devall="1">全部关闭</button>'+
+    '<button class="mbtn" data-close="1" style="margin-left:8px">收起</button></div>');
+  say('开发者选项。别玩坏了。',6000);
+}
 document.addEventListener('click',function(e){
   const T=s=>e.target.closest(s);
+  if(T('[data-dev]')){
+    const k=T('[data-dev]').dataset.dev;
+    S.dev[k]=!S.dev[k];
+    toast('已'+(S.dev[k]?'开启':'关闭')+'：'+({inf:'无限资源',nokey:'跳过密钥校验',nocool:'忽略节点冷却'}[k]||k),'ok','DEV');
+    saveState();render();openDev();return;
+  }
+  if(T('[data-devall]')){
+    S.dev={inf:false,nokey:false,nocool:false};
+    toast('开发者选项已全部关闭','','DEV');saveState();render();openDev();return;
+  }
 
   const nb=T('#mainnav button');
   if(nb){if(nb.dataset.v==='quest')S.questSeen=true;go(nb.dataset.v);return;}
-  if(T('#consolebtn')){if(!S.hack)setHack(true);go('console');return;}
+  if(T('#consolebtn')){
+    devTap++;
+    clearTimeout(devTapT);
+    devTapT=setTimeout(()=>{devTap=0;},2000);
+    if(devTap>=10){devTap=0;clearTimeout(devTapT);openDev();return;}
+    if(!S.hack)setHack(true);go('console');return;
+  }
   if(T('[data-exit]')){setHack(false);go('home');return;}
   if(T('[data-reset]')){
     if(confirm('确定清除存档吗？所有调查进度会回到最开始，且无法恢复。'))resetState();
@@ -3012,8 +3074,8 @@ document.addEventListener('click',function(e){
     if(!S.hack){toast('需要启动骇入模式（按 TAB）','err','权限不足');say('这种字段得开骇入模式才看得见。按 TAB。');return;}
     const k=o.dataset.member+'_'+o.dataset.opt;
     if(S.member[k])return;
-    if(S.att<20){toast('注意力不足','err','资源不足');say('注意力不够了，歇一会儿再来。');return;}
-    S.att-=20;S.dec+=100;S.cnt.member++;S.member[k]=1;
+    if(!payAtt(20))return;
+    S.dec+=100;S.cnt.member++;S.member[k]=1;
     toast('档案已核对','ok','+100 破译点');
     say('核对完了。有人的档案，被人翻开过。');
     checkChapter();saveState();render();return;
@@ -3050,8 +3112,8 @@ function doCop(k){
   const cur=CNODES.find(n=>n.id===S.cnode);
   const o=cur.ops.find(x=>x.k===k),st=S.nodes[cur.id];
   const cost=k!=='opt'&&st.opt?Math.round(o.cost*0.7):o.cost;
-  if(k==='exec'&&Date.now()<S.coolUntil){toast('节点冷却中','','提示');say('节点在冷却，急不来。先去论坛转转。');return;}
-  if(k==='exec'&&!st.keyOk){toast('还没有授权密钥','err','ACCESS DENIED');say('先报口令。钥匙在你翻过的那些东西里。');return;}
+  if(k==='exec'&&Date.now()<S.coolUntil&&!S.dev.nocool){toast('节点冷却中','','提示');say('节点在冷却，急不来。先去论坛转转。');return;}
+  if(k==='exec'&&!st.keyOk&&!S.dev.nokey){toast('还没有授权密钥','err','ACCESS DENIED');say('先报口令。钥匙在你翻过的那些东西里。');return;}
   if(!spendDec(cost))return;
   st[k]=1;
   if(k==='exec'){
@@ -3150,7 +3212,7 @@ function showEnding(who){
 }
 
 /* ==================== 背景音乐 ==================== */
-const MUSIC_VOL=.4;              /* 音量 40% */
+const MUSIC_VOL=1;               /* 音量 100% */
 const BGM_SRC={normal:'assets/bgm_normal.mp3',hack:'assets/bgm_hack.mp3'};
 const BGM={normal:null,hack:null};
 let bgmCur=null,bgmReady=false,musicOn=true;
@@ -3203,7 +3265,7 @@ function setMusic(on){
   if(b){
     b.classList.toggle('off',!on);
     const lg=b.querySelector('.lg');
-    if(lg)lg.textContent=on?'♪ 音乐 40%':'♪ 音乐 已关闭';
+    if(lg)lg.textContent=on?'♪ 音乐 100%':'♪ 音乐 已关闭';
     b.title=on?'关闭背景音乐':'打开背景音乐';
   }
   if(!on){
