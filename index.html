@@ -220,7 +220,7 @@ body.hack .brand .mk{box-shadow:0 0 16px var(--amber)}
 #consolebtn{white-space:nowrap}
 body.hack #consolebtn{box-shadow:0 0 18px var(--amber-soft)}
 #consolebtn small{display:block;font-size:9px;opacity:.7;font-weight:400;margin-top:2px}
-.hud-progress{margin-top:11px;font-family:var(--mono);font-size:9.5px;color:var(--txt3)}
+.hud-progress{margin-top:11px;font-family:var(--mono);font-size:9.5px;color:var(--txt3);white-space:nowrap}
 .hud-progress .pv{color:var(--amber)}
 
 /* ---- 内容区 ---- */
@@ -775,6 +775,37 @@ body.hack #subtitle{border-left-color:var(--amber);box-shadow:0 0 26px var(--amb
 #subtitle .caret{display:inline-block;width:6px;height:12px;background:var(--amber);
   vertical-align:-1px;margin-left:2px;animation:blink .8s step-end infinite}
 
+/* ---- 资源加载屏 ---- */
+#loader{
+  position:fixed;inset:0;z-index:9900;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;padding:24px;
+  transition:opacity .38s;
+}
+#loader.gone{opacity:0;pointer-events:none}
+#loader .lbox{width:min(440px,100%);text-align:center}
+#loader .llogo{font-family:var(--mono);font-size:34px;font-weight:800;color:var(--amber);letter-spacing:7px}
+#loader .lsub{font-family:var(--mono);font-size:10px;color:var(--txt3);letter-spacing:2.5px;margin:7px 0 26px}
+#loader .lbar{height:6px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;overflow:hidden}
+#loader .lbar i{display:block;height:100%;width:0;background:var(--amber);transition:width .3s}
+#loader .lnum{font-family:var(--mono);font-size:11.5px;color:var(--txt2);margin-top:12px}
+#loader .ltip{font-family:var(--mono);font-size:10.5px;color:var(--amber);margin-top:6px;min-height:15px}
+#loader .lskip{
+  margin-top:24px;padding:9px 18px;font-family:var(--mono);font-size:11.5px;
+  color:var(--txt2);background:transparent;border:1px solid var(--line2);border-radius:6px;
+  cursor:pointer;transition:.2s;
+}
+#loader .lskip:hover{color:var(--amber);border-color:var(--amber)}
+#loader .lskip:disabled{cursor:default;color:var(--amber);border-color:var(--amber);opacity:.75}
+
+/* ---- 首页「关于」---- */
+.aboutfoot{display:flex;flex-direction:column;gap:11px}
+.af-row{display:flex;justify-content:space-between;align-items:center;gap:14px;font-size:12.5px;color:var(--txt2)}
+.af-row .k{font-family:var(--mono);font-size:10.5px;color:var(--txt3);letter-spacing:1px}
+.af-row .v{color:var(--amber);font-weight:600}
+.minibtn.dg{color:var(--bad);border-color:var(--bad)}
+.minibtn.dg:hover{background:var(--bad);color:#fff}
+.af-note{font-size:11.5px;color:var(--txt2);line-height:1.75}
+
 /* ---- 存档提示 ---- */
 #hintbtn{margin-top:10px;width:100%;padding:8px 10px;font-family:var(--mono);font-size:11px;
   color:var(--amber);background:transparent;border:1px solid var(--amber);border-radius:6px;cursor:pointer;transition:.2s}
@@ -1111,7 +1142,7 @@ body.hack .arch-face:not(.hasbg){ /* 有真实头像的档案卡不参与渐变�
       <div class="mk">PNS</div>
       <div class="bn">
         <b>Planet Network Studio</b>
-        <span>全域互联终端 v2.0.24</span>
+        <span>全域互联终端 · 内部测试 2</span>
       </div>
     </div>
     <nav id="mainnav"></nav>
@@ -1174,6 +1205,18 @@ body.hack .arch-face:not(.hasbg){ /* 有真实头像的档案卡不参与渐变�
 <div id="toasts"></div>
 
 <!-- 入场引导 -->
+<!-- 资源加载屏：加载完才能进游戏，也可以跳过改为按需加载 -->
+<div id="loader">
+  <div class="lbox">
+    <div class="llogo">PNS</div>
+    <div class="lsub">PLANET NETWORK STUDIO · 资源校验</div>
+    <div class="lbar"><i id="ldBar"></i></div>
+    <div class="lnum" id="ldNum">正在握手…</div>
+    <div class="ltip" id="ldTip"></div>
+    <button class="lskip" id="ldSkip">跳过校验，边玩边加载 →</button>
+  </div>
+</div>
+
 <div id="intro">
   <div class="ibox">
     <div class="logo2">PNS</div>
@@ -2047,6 +2090,7 @@ const VIEWS=[
 ];
 
 /* ==================== 状态 ==================== */
+const VERSION='保密内部封闭测试 2';
 const SAVE_KEY='pns_surfing_v3';
 const OLD_SAVE_KEY='pns_surfing_v2';
 const COOL_MS=90000, REGEN_MS=40000, REGEN_AMT=40;
@@ -2289,6 +2333,17 @@ function viewHome(){
             '<div><a href="https://space.bilibili.com/543879096" target="_blank" rel="noopener">↗ 哔哩哔哩 慕寒_Official</a></div>'+
             '<div><a href="https://github.com/bilibiliHaoziyao" target="_blank" rel="noopener">↗ GitHub bilibiliHaoziyao</a></div>'+
           '</div></div>'+
+        '<div class="sidepanel card" style="margin-top:18px">'+
+          '<div class="sec-title">关于 / ABOUT</div>'+
+          '<div class="aboutfoot">'+
+            '<div class="af-row"><span class="k">VERSION</span><span class="v">'+esc(VERSION)+'</span></div>'+
+            '<div class="af-row"><span class="k">CASE FILE</span><span>SYS-0001 超级小慧 失联案</span></div>'+
+            '<div class="af-row"><span class="k">SAVE</span><span>自动保存于本机浏览器</span></div>'+
+            '<p class="af-note">这是一个还没对外发布的内部版本。剧情、谜题和界面都还可能改。'+
+            '在哪一步卡住了、看到错别字、或者觉得哪段没讲明白，都可以直接告诉他。</p>'+
+            '<div><button class="minibtn dg" data-reset="1">清除存档</button></div>'+
+          '</div>'+
+        '</div>'+
       '</div>'+
     '</div>'+
   '</section>';
@@ -2891,6 +2946,10 @@ document.addEventListener('click',function(e){
   if(nb){if(nb.dataset.v==='quest')S.questSeen=true;go(nb.dataset.v);return;}
   if(T('#consolebtn')){if(!S.hack)setHack(true);go('console');return;}
   if(T('[data-exit]')){setHack(false);go('home');return;}
+  if(T('[data-reset]')){
+    if(confirm('确定清除存档吗？所有调查进度会回到最开始，且无法恢复。'))resetState();
+    return;
+  }
   if(T('#savehint')){if(confirm('确定要重置全部进度吗？此操作不可恢复。'))resetState();return;}
   if(T('[data-close]')){closeModal();return;}
   const kt=T('[data-keytry]');
@@ -3067,7 +3126,7 @@ function showEnding(who){
         '<p class="mono" style="color:var(--bad);margin-top:14px">只有你自己知道，从那天起，公司里再也没有人叫过你「慕寒」。<br>因为你把那个名字，和那扇门一起关上了。</p>')+
       '<div class="fin">'+
       (good?'系统备注：HZY-0000 已重新封存，权限移交三人共管。':'系统备注：HZY-0000 已激活，主账号权限已被覆盖。')+'<br>'+
-      'PNS 全域互联终端 v3.0.01 · 调查结束<br>'+
+      'PNS 全域互联终端 v3.0.01 · '+esc(VERSION)+'<br>调查结束<br>'+
       '写这个故事的人：'+(good?'慕寒_Official':'一个同事')+' · UID 543879096<br><br>'+
       '<span class="dim">谢谢你把这条线走完。</span></div>'+
     '</div>'+
@@ -3163,15 +3222,60 @@ function runIntro(){
 }
 
 /* ==================== 启动 ==================== */
+/* 需要预载的资源：全部角色头像 */
+const PRELOAD=[
+  'assets/av_ayou.webp','assets/av_xinyu.webp','assets/av_xiaohui.webp',
+  'assets/av_haozy.webp','assets/av_kaneko.webp','assets/av_linmo.webp',
+  'assets/av_xiaojuzi.webp'
+];
+function runLoader(){
+  const box=$('#loader'),bar=$('#ldBar'),num=$('#ldNum'),tip=$('#ldTip'),btn=$('#ldSkip');
+  const total=PRELOAD.length;
+  let loaded=0,finished=false;
+  const started=Date.now();
+  const enter=()=>{
+    if(finished)return;finished=true;
+    box.classList.add('gone');
+    setTimeout(()=>{box.style.display='none';},420);
+    if(window.__afterLoad)window.__afterLoad();
+  };
+  const tick=()=>{
+    loaded++;
+    const pct=Math.round(loaded/total*100);
+    bar.style.width=Math.min(100,pct)+'%';
+    num.textContent='已校验 '+loaded+' / '+total+' · '+pct+'%';
+    if(loaded>=total){
+      tip.textContent='资源就绪';
+      num.textContent='已校验 '+total+' / '+total+' · 100%';
+      btn.textContent='正在进入内网…';
+      btn.disabled=true;
+      /* 至少亮 700ms，避免缓存命中时一闪而过 */
+      setTimeout(enter,Math.max(0,700-(Date.now()-started)));
+    }
+  };
+  PRELOAD.forEach(src=>{
+    const im=new Image();
+    im.onload=tick;im.onerror=tick;
+    im.src=src;
+  });
+  btn.onclick=()=>{
+    if(loaded<total){tip.textContent='已跳过 · 图片会在用到时再加载';}
+    enter();
+  };
+}
+
 (function boot(){
   const restored=loadState();
-  if(restored&&S.introDone){
-    $('#intro').classList.add('gone');
-    render();resumePlayerPosts();
-    setTimeout(()=>{toast('已恢复上次的进度','ok','SAVE');say('欢迎回来。线索还在，接着查。',5200);},300);
-  }else{
-    S.introDone=false;render();runIntro();
-  }
+  window.__afterLoad=()=>{
+    if(restored&&S.introDone){
+      $('#intro').classList.add('gone');
+      render();resumePlayerPosts();
+      setTimeout(()=>{toast('已恢复上次的进度','ok','SAVE');say('欢迎回来。线索还在，接着查。',5200);},300);
+    }else{
+      S.introDone=false;render();runIntro();
+    }
+  };
+  runLoader();
 })();
 })();
 
